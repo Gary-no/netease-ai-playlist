@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { neteaseApi } from '../services/netease.js';
 import { cookieStore } from '../services/cookieStore.js';
 import { classifySongs } from '../services/llm.js';
+import { createTask, getTask, setProgress } from '../services/taskStore.js';
 
 const router = Router();
 
@@ -26,23 +27,12 @@ async function mapWithConcurrency(arr, limit, fn) {
   return results;
 }
 
-// POST /api/classify —— 按指定方式分类所选歌单的歌曲（预览，不落库）
-router.post('/', async (req, res) => {
-  const record = getRecord(req);
-  if (!record) return res.status(401).json({ error: '请先扫码登录网易云账号' });
-
-  const {
-    playlistIds = [],
-    mode = 'genre',
-    options = [],
-    minCommentTotal = 0,
-    minLikedCount = 0,
-  } = req.body || {};
-  if (!Array.isArray(playlistIds) || !playlistIds.length) {
-    return res.status(400).json({ error: '请选择至少一个歌单' });
-  }
-
+// 核心分类逻辑（异步执行，实时更新进度）
+async function runClassify(taskId, record, payload) {
+  const { playlistIds, mode, options, minCommentTotal, minLikedCount } = payload;
   try {
+    setProgress(taskId, 5, '正在读取歌单…');
+
     // 收集所选歌单的歌曲（去重），最多 5 个歌单
     const songMap = new Map();
     for (const pid of playlistIds.slice(0, 5)) {
@@ -61,7 +51,8 @@ router.post('/', async (req, res) => {
     }
 
     let songs = [...songMap.values()].slice(0, 300);
-    if (!songs.length) return res.status(400).json({ error: '所选歌单没有可分类的歌曲' });
+    if (!songs.length) throw new Error('所选歌单没有可分类的歌曲');
+    setProgress(taskId, 15, `已读取 ${songs.length} 首歌曲`);
 
     // 按评论数 / 点赞数 过滤（限并发 5 拉取歌曲统计）
     let filteredCount = 0;
@@ -76,11 +67,12 @@ router.post('/', async (req, res) => {
         else filteredCount++;
       }
       songs = kept;
-      if (!songs.length) return res.status(400).json({ error: '过滤后没有符合条件的歌曲' });
+      if (!songs.length) throw new Error('过滤后没有符合条件的歌曲');
     }
 
     // 拉歌词 + 评论（限并发 5，提升分类准确度；热度筛选不需要）
     if (mode !== 'hot' && songs.length) {
+      setProgress(taskId, 25, '正在获取歌词与评论…');
       await mapWithConcurrency(songs, 5, async (s) => {
         try {
           const [lyric, comments] = await Promise.all([
@@ -95,6 +87,7 @@ router.post('/', async (req, res) => {
         }
       });
     }
+    setProgress(taskId, 45, '歌词评论已就绪，开始 AI 分类…');
 
     // 热度模式：只按评论/点赞阈值筛选，不做 LLM 分类
     let categories;
@@ -126,13 +119,91 @@ router.post('/', async (req, res) => {
             extra = { knownMap, knownReason, samples };
           }
         } catch (e) {
-          // 训练语料获取失败不阻断分类
           console.log('[classify] 训练语料加载失败:', e.message);
         }
       }
-      categories = await classifySongs(songs, mode, options, extra);
+      categories = await classifySongs(songs, mode, options, extra, (pct) => {
+        // LLM 内部进度映射 45% -> 95%
+        setProgress(taskId, Math.round(45 + pct * 0.5), 'AI 正在分类…');
+      });
     }
-    res.json({ songCount: songs.length, filteredCount, categories });
+
+    setProgress(taskId, 100, '完成');
+    const t = getTask(taskId);
+    if (t) {
+      t.status = 'done';
+      t.result = { songCount: songs.length, filteredCount, categories };
+    }
+  } catch (e) {
+    const t = getTask(taskId);
+    if (t) {
+      t.status = 'error';
+      t.error = e.message || String(e);
+    }
+  }
+}
+
+// POST /api/classify/start —— 立即返回任务ID，后台异步执行
+router.post('/start', async (req, res) => {
+  const record = getRecord(req);
+  if (!record) return res.status(401).json({ error: '请先扫码登录网易云账号' });
+
+  const {
+    playlistIds = [],
+    mode = 'genre',
+    options = [],
+    minCommentTotal = 0,
+    minLikedCount = 0,
+  } = req.body || {};
+  if (!Array.isArray(playlistIds) || !playlistIds.length) {
+    return res.status(400).json({ error: '请选择至少一个歌单' });
+  }
+
+  const task = createTask();
+  task.status = 'running';
+  // 后台执行，不阻塞响应
+  runClassify(task.id, record, { playlistIds, mode, options, minCommentTotal, minLikedCount })
+    .catch((e) => console.error('[classify] 任务异常:', e));
+
+  res.json({ taskId: task.id });
+});
+
+// GET /api/classify/status/:id —— 轮询进度与结果
+router.get('/status/:id', (req, res) => {
+  const t = getTask(req.params.id);
+  if (!t) return res.status(404).json({ error: '任务不存在或已过期' });
+  res.json({
+    status: t.status,
+    progress: t.progress,
+    step: t.step,
+    result: t.status === 'done' ? t.result : null,
+    error: t.status === 'error' ? t.error : null,
+  });
+});
+
+// 兼容：保留原同步接口（短时任务可用）
+router.post('/', async (req, res) => {
+  const record = getRecord(req);
+  if (!record) return res.status(401).json({ error: '请先扫码登录网易云账号' });
+
+  const {
+    playlistIds = [],
+    mode = 'genre',
+    options = [],
+    minCommentTotal = 0,
+    minLikedCount = 0,
+  } = req.body || {};
+  if (!Array.isArray(playlistIds) || !playlistIds.length) {
+    return res.status(400).json({ error: '请选择至少一个歌单' });
+  }
+
+  try {
+    const task = createTask();
+    task.status = 'running';
+    await runClassify(task.id, record, { playlistIds, mode, options, minCommentTotal, minLikedCount });
+    const t = getTask(task.id);
+    if (t.status === 'error') return res.status(500).json({ error: t.error });
+    res.json(t.result);
   } catch (e) {
     res.status(500).json({ error: e.message || String(e) });
   }

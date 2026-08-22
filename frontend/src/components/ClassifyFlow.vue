@@ -139,6 +139,7 @@
         </div>
         <span class="progress-text">{{ progress }}%</span>
       </div>
+      <p class="progress-step">{{ progressStep }}</p>
     </div>
 
     <!-- ======== 阶段3：分类结果 ======== -->
@@ -256,6 +257,7 @@ const showDone = ref(false); // 生成完成弹窗
 const doneInfo = ref(null); // 完成的歌单信息 { name, playlistId, count }
 const error = ref('');
 const progress = ref(0);
+const progressStep = ref('');
 let progressTimer = null;
 
 // 热度模式的评论/点赞阈值（非均匀滑块，0-10000，前 1000 占 90%）
@@ -347,32 +349,49 @@ async function startClassify() {
   state.value = 'running';
   error.value = '';
   progress.value = 0;
-  progressTimer = setInterval(() => {
-    progress.value = Math.min(88, progress.value + Math.ceil(Math.random() * 3));
-  }, 300);
+  progressStep.value = '正在提交分类任务…';
   try {
     // AI 自动匹配时用全部细项，否则用手动勾选的细项
     const effectiveOptions = autoMatch.value ? modeOptions.value : [...selectedOptions.value];
-    const data = await api.classify(
+    const taskId = await api.startClassify(
       [...selected.value],
       props.mode,
       effectiveOptions,
       commentTotal.value,
       likedCount.value
     );
-    clearInterval(progressTimer);
-    progress.value = 100;
-    result.value = data;
-    // 初始化每类的命名/生成状态
-    catNames.value = data.categories.map((c) => c.name);
-    generated.value = data.categories.map(() => false);
-    generating.value = data.categories.map(() => false);
-    setTimeout(() => { state.value = 'result'; }, 400);
+    // 轮询进度（真进度，不超时）
+    await pollTask(taskId);
   } catch (e) {
-    clearInterval(progressTimer);
     state.value = 'pick';
     error.value = e.response?.data?.error || e.message || '分类失败';
   }
+}
+
+// 轮询后端任务状态，实时更新进度条
+async function pollTask(taskId) {
+  const poll = async () => {
+    const st = await api.classifyStatus(taskId);
+    if (st.status === 'running') {
+      progress.value = st.progress;
+      progressStep.value = st.step || '处理中…';
+      progressTimer = setTimeout(poll, 1500);
+    } else if (st.status === 'done') {
+      clearInterval(progressTimer);
+      progress.value = 100;
+      progressStep.value = '完成';
+      result.value = st.result;
+      catNames.value = st.result.categories.map((c) => c.name);
+      generated.value = st.result.categories.map(() => false);
+      generating.value = st.result.categories.map(() => false);
+      setTimeout(() => { state.value = 'result'; }, 400);
+    } else if (st.status === 'error') {
+      clearInterval(progressTimer);
+      state.value = 'pick';
+      error.value = st.error || '分类失败';
+    }
+  };
+  await poll();
 }
 
 // 单个分类生成歌单（命名后）
@@ -832,6 +851,13 @@ function fmtDuration(sec) {
   min-width: 40px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+.progress-step {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 10px 0 0;
+  min-height: 18px;
 }
 .result-view {
   display: flex;

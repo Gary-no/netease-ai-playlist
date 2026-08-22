@@ -21,9 +21,10 @@ const CLASSIFY_PROMPTS = {
  * @param {'mood'|'genre'|'language'|'hot'} mode
  * @param {string[]} options 用户勾选的分类细项
  * @param {{knownMap?: Map<number,string>, samples?: Object<string,string[]>}} extra 训练映射 + 参考样本
+ * @param {(pct:number)=>void} [onProgress] 进度回调，pct 为 0~1
  * @returns {Promise<Array<{name:string, songs:Array}>>}
  */
-export async function classifySongs(songs, mode, options, extra = {}) {
+export async function classifySongs(songs, mode, options, extra = {}, onProgress = null) {
   if (config.mock) return mockClassify(songs, mode, options);
 
   const { knownMap = null, knownReason = null, samples = null } = extra;
@@ -62,6 +63,7 @@ export async function classifySongs(songs, mode, options, extra = {}) {
       lyric: s.lyric || '',
       comments: (s.comments || []).join(' | ').slice(0, 200),
     }));
+    onProgress?.(0); // LLM 调用前
     const res = await client.chat.completions.create({
       model: config.llm.model,
       temperature: 0.1,
@@ -85,6 +87,7 @@ export async function classifySongs(songs, mode, options, extra = {}) {
       throw new Error('AI 分类结果解析失败');
     }
     llmAssignments = Array.isArray(data.assignments) ? data.assignments : [];
+    onProgress?.(1); // LLM 调用完成
   }
 
   const assignments = [...knownAssignments, ...llmAssignments];

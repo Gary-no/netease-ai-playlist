@@ -75,8 +75,23 @@ export const api = {
   },
 
   // ===== 一键分类 =====
-  // 按 mode(mood/genre/language) + 勾选细项(options) 分类所选歌单
-  // minCommentTotal / minLikedCount: 过滤掉评论/点赞数不达标的歌曲
+  // 异步分类：立即返回 taskId，前端轮询进度
+  async startClassify(playlistIds, mode, options, minCommentTotal = 0, minLikedCount = 0) {
+    const { data } = await http.post('/classify/start', {
+      playlistIds,
+      mode,
+      options,
+      minCommentTotal,
+      minLikedCount,
+    });
+    return data.taskId;
+  },
+  // 轮询任务状态
+  async classifyStatus(taskId) {
+    const { data } = await http.get(`/classify/status/${taskId}`);
+    return data;
+  },
+  // 兼容旧接口
   async classify(playlistIds, mode, options, minCommentTotal = 0, minLikedCount = 0) {
     const { data } = await http.post('/classify', {
       playlistIds,
