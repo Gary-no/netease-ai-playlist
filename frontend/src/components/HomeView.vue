@@ -5,8 +5,7 @@
       <div class="hero-inner">
         <p class="hero-label">Playlist Helper</p>
         <h1 class="hero-title">
-          <span class="fw-light">整理</span><span class="fw-italic">你</span><span class="fw-thin">的</span><br/>
-          <span class="fw-medium">音乐</span><span class="fw-bold">世</span><span class="fw-oblique">界</span>
+          整理你的<br/>音乐世界
         </h1>
         <p class="hero-sub">
           按情绪、曲风、语种、热度<br class="mob-br"/>自动分类整理
@@ -115,7 +114,7 @@ onMounted(() => {
   const root = rootEl.value;
   ctx = gsap.context(() => {
     gsap.from('.hero-label', { y: 16, opacity: 0, duration: 0.5, ease: 'power2.out', delay: 0.1 });
-    gsap.from('.hero-title span', { y: 32, opacity: 0, duration: 0.6, ease: 'power2.out', stagger: 0.04, delay: 0.2 });
+    gsap.from('.hero-title', { y: 32, opacity: 0, duration: 0.6, ease: 'power2.out', delay: 0.2 });
     gsap.from('.hero-sub', { y: 16, opacity: 0, duration: 0.5, ease: 'power2.out', delay: 0.4 });
 
     // 逐字动画：每个字 y 偏移 + 透明度 + blur 根据 --r 错落
@@ -188,17 +187,8 @@ onUnmounted(() => ctx && ctx.revert());
   font-family: var(--font-display);
   font-size: clamp(44px, 10vw, 110px);
   line-height: 1;
-  letter-spacing: -0.04em;
-  color: var(--text);
-  text-wrap: balance;
+  font-weight: 400;
 }
-/* 字体粗细正斜混排 */
-.fw-light  { font-weight: 300; }
-.fw-thin   { font-weight: 200; }
-.fw-medium { font-weight: 480; letter-spacing: -0.06em; }
-.fw-bold   { font-weight: 600; }
-.fw-italic { font-style: italic; font-weight: 350; }
-.fw-oblique { font-style: oblique; font-weight: 500; }
 .hero-sub {
   margin: 0;
   font-size: clamp(13px, 1.4vw, 15px);
