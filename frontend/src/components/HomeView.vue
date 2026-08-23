@@ -95,6 +95,20 @@
       免费使用 · v{{ version }} · 不会删除或修改原歌单 · 隐私与授权说明见登录弹窗 ·
       反馈请提 <a href="https://github.com/Gary-no/netease-ai-playlist/issues" target="_blank" rel="noopener">GitHub Issue</a>
     </footer>
+
+    <!-- ============ CTA：现在开始（全屏） ============ -->
+    <section class="cta reveal" @click="onStart">
+      <p class="cta-eyebrow">准备好了吗</p>
+      <h2 class="cta-title">
+        现在<span class="grad">开始</span>
+      </h2>
+      <div class="cta-arrow" aria-hidden="true">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="24" cy="24" r="22" />
+          <path d="M20 16l8 8-8 8" />
+        </svg>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -149,6 +163,12 @@ function onCardMove(e) {
 }
 function onCardLeave(e) {
   gsap.to(e.currentTarget, { rotationX: 0, rotationY: 0, duration: 0.6, ease: 'elastic.out(1, 0.55)' });
+}
+
+// 底部 CTA —— 点击后默认进入「情绪」分类入口
+// 若未登录，App.vue 的 onSelectMode 会自动弹出登录弹窗
+function onStart() {
+  emit('select', 'mood');
 }
 
 const options = [
@@ -490,7 +510,65 @@ const options = [
 .foot a { color: var(--accent); text-decoration: none; }
 .foot a:hover { text-decoration: underline; }
 
-/* ============ 响应式：1024 / 768 ============ */
+/* ============ CTA：现在开始 ============ */
+.cta {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  user-select: none;
+}
+.cta-eyebrow {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  transition: color 0.3s var(--ease);
+}
+.cta:hover .cta-eyebrow {
+  color: var(--text);
+}
+.cta-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(72px, 12vw, 160px);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  transition: transform 0.4s var(--ease), letter-spacing 0.4s var(--ease);
+}
+.cta:hover .cta-title {
+  letter-spacing: -0.02em;
+  transform: scale(1.04);
+}
+.cta-arrow {
+  color: var(--accent);
+  opacity: 0;
+  transform: translateY(-12px) scale(0.8);
+  transition:
+    opacity 0.4s var(--ease),
+    transform 0.4s var(--ease);
+  animation: cta-breathe 2.8s var(--ease) infinite;
+}
+.cta:hover .cta-arrow {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+@keyframes cta-breathe {
+  0%, 100% { opacity: 0.4; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(6px); }
+}
+
+/* ============ 响应式 ============ */
 @media (max-width: 1023px) {
   .cards { grid-template-columns: repeat(2, 1fr); }
   .howto-steps { grid-template-columns: 1fr; }
