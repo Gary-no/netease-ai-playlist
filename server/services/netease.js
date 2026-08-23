@@ -78,19 +78,35 @@ const realNetease = {
 
   // 发送手机验证码
   async sendCaptcha(phone) {
-    const { data } = await http.get('/captcha/sent', {
-      params: params({ phone, ctcode: '86' }),
-    });
-    return data;
+    try {
+      const { data } = await http.get('/captcha/sent', {
+        params: params({ phone, ctcode: '86' }),
+        validateStatus: () => true,
+      });
+      return data;
+    } catch (e) {
+      if (e.response?.data) return e.response.data;
+      throw e;
+    }
   },
 
   // 手机验证码登录
   async loginByCellphone(phone, captcha) {
-    const { data } = await http.get('/login/cellphone', {
-      params: params({ phone, captcha }),
-    });
-    if (data.cookie) data.cookie = sanitizeCookie(data.cookie);
-    return data;
+    try {
+      const { data } = await http.get('/login/cellphone', {
+        params: params({ phone, captcha, ctcode: '86' }),
+        validateStatus: () => true,
+      });
+      if (data.cookie) data.cookie = sanitizeCookie(data.cookie);
+      return data;
+    } catch (e) {
+      if (e.response?.data) {
+        const d = e.response.data;
+        if (d.cookie) d.cookie = sanitizeCookie(d.cookie);
+        return d;
+      }
+      throw e;
+    }
   },
 
   // ============ 歌单相关 ============
