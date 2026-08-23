@@ -135,9 +135,9 @@
       <p>分类中</p>
       <div class="progress-wrap">
         <div class="progress-bar">
-          <div class="progress-fill" :style="{ width: progress + '%' }"></div>
+          <div class="progress-fill" :style="{ width: smoothProgress + '%' }"></div>
         </div>
-        <span class="progress-text">{{ progress }}%</span>
+        <span class="progress-text">{{ Math.round(smoothProgress) }}%</span>
       </div>
       <p class="progress-step">{{ progressStep }}</p>
     </div>
@@ -256,9 +256,11 @@ const generating = ref([]); // 每类是否生成中
 const showDone = ref(false); // 生成完成弹窗
 const doneInfo = ref(null); // 完成的歌单信息 { name, playlistId, count }
 const error = ref('');
-const progress = ref(0);
+const progress = ref(0);        // 后端报告的原始值（目标）
+const smoothProgress = ref(0);   // 前端平滑显示值
 const progressStep = ref('');
-let progressTimer = null;
+let progressTimer = null;        // 后端轮询定时器
+let smoothTimer = null;          // 前端平滑动画定时器
 
 // 热度模式的评论/点赞阈值（非均匀滑块，0-10000，前 1000 占 90%）
 const commentTotal = ref(0);
@@ -302,7 +304,10 @@ const modeOptions = computed(() => MODE_OPTIONS[props.mode] || []);
 
 onMounted(loadPlaylists);
 watch(() => props.loggedIn, (v) => v && loadPlaylists());
-onUnmounted(() => { if (progressTimer) clearInterval(progressTimer); });
+onUnmounted(() => {
+  if (progressTimer) clearTimeout(progressTimer);
+  if (smoothTimer) clearInterval(smoothTimer);
+});
 
 async function loadPlaylists() {
   loading.value = true;
@@ -349,6 +354,7 @@ async function startClassify() {
   state.value = 'running';
   error.value = '';
   progress.value = 0;
+  smoothProgress.value = 0;
   progressStep.value = '正在提交分类任务…';
   try {
     // AI 自动匹配时用全部细项，否则用手动勾选的细项
@@ -368,8 +374,23 @@ async function startClassify() {
   }
 }
 
-// 轮询后端任务状态，实时更新进度条
+// 轮询后端任务状态，前端平滑动画显示进度
 async function pollTask(taskId) {
+  // 启动前端平滑动画：每 100ms 向目标值逼近 ~2%
+  if (smoothTimer) clearInterval(smoothTimer);
+  smoothTimer = setInterval(() => {
+    const target = progress.value;
+    const cur = smoothProgress.value;
+    if (target === 100) {
+      // 完成时快速拉到 100
+      smoothProgress.value = Math.min(100, cur + 8);
+    } else if (cur < target) {
+      // 向目标逼近，速度递减接近目标时更慢
+      const step = Math.max(0.5, (target - cur) * 0.12);
+      smoothProgress.value = Math.min(target, cur + step);
+    }
+  }, 100);
+
   const poll = async () => {
     const st = await api.classifyStatus(taskId);
     if (st.status === 'running') {
@@ -377,16 +398,22 @@ async function pollTask(taskId) {
       progressStep.value = st.step || '处理中…';
       progressTimer = setTimeout(poll, 1500);
     } else if (st.status === 'done') {
-      clearInterval(progressTimer);
+      clearTimeout(progressTimer);
       progress.value = 100;
       progressStep.value = '完成';
       result.value = st.result;
       catNames.value = st.result.categories.map((c) => c.name);
       generated.value = st.result.categories.map(() => false);
       generating.value = st.result.categories.map(() => false);
-      setTimeout(() => { state.value = 'result'; }, 400);
+      // 等平滑动画拉满到 100 后再切结果页
+      setTimeout(() => {
+        if (smoothTimer) clearInterval(smoothTimer);
+        smoothProgress.value = 100;
+        state.value = 'result';
+      }, 600);
     } else if (st.status === 'error') {
-      clearInterval(progressTimer);
+      clearTimeout(progressTimer);
+      if (smoothTimer) clearInterval(smoothTimer);
       state.value = 'pick';
       error.value = st.error || '分类失败';
     }
@@ -845,7 +872,7 @@ function fmtDuration(sec) {
   height: 100%;
   border-radius: 3px;
   background: var(--accent);
-  transition: width 0.3s;
+  transition: width 0.05s linear;
 }
 .progress-text {
   font-size: 13px;
