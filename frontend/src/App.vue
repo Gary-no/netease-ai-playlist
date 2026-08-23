@@ -76,7 +76,7 @@ const showLogin = ref(false);
 const profile = ref(null);
 const loggingOut = ref(false);
 const showMenu = ref(false);
-const theme = ref(localStorage.getItem('ncm_theme') || 'light');
+const theme = ref(localStorage.getItem('ncm_theme') || 'dark');
 
 // 明暗主题
 function applyTheme() {
@@ -183,8 +183,10 @@ async function onLogout() {
   color: var(--text);
 }
 .brand-title {
+  font-family: var(--font-display);
   font-weight: 700;
   letter-spacing: 0.2px;
+  color: var(--text);
 }
 .version-badge {
   font-size: 11px;

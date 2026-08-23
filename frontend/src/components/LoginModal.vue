@@ -216,7 +216,7 @@ watch(
 .login-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--modal-overlay);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
@@ -298,7 +298,7 @@ watch(
   min-height: 18px;
 }
 .status.success {
-  color: #34c759;
+  color: var(--success);
 }
 .status.error {
   color: var(--danger);
@@ -365,7 +365,7 @@ watch(
 button.primary {
   border: none;
   background: var(--accent);
-  color: #fff;
+  color: var(--text-on-accent);
   border-radius: 12px;
   padding: 12px;
   font-size: 15px;

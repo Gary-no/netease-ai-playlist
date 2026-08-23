@@ -1,21 +1,63 @@
+/* Tailwind v4：仅引入主题与工具类，不引入 preflight 重置，避免影响既有组件样式 */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
 * {
   box-sizing: border-box;
 }
 
+/* ============ 设计令牌：暗色为默认（itsoffbrand 风格） ============ */
 :root {
-  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
-    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  --bg: #f2f4f9;
+  color-scheme: dark;
+  --font: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'SF Pro Display', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  --font-display: 'Space Grotesk Variable', 'Inter Variable', -apple-system,
+    BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  --bg: #060608;
   /* 玻璃材质 */
+  --glass-bg: rgba(255, 255, 255, 0.045);
+  --glass-bg-strong: rgba(18, 18, 22, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-highlight: rgba(255, 255, 255, 0.08); /* 顶部高光 */
+  --glass-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.35),
+    0 12px 32px rgba(0, 0, 0, 0.5);
+  --blur: 28px;
+  --text: #f5f5f7;
+  --text-secondary: #9b9ba1;
+  --accent: #4f8cff;
+  --accent-soft: rgba(79, 140, 255, 0.16);
+  --hover-bg: rgba(255, 255, 255, 0.07);
+  --hover-bg-strong: rgba(255, 255, 255, 0.13);
+  --bubble-ai-bg: rgba(255, 255, 255, 0.08);
+  --bubble-ai-text: #f5f5f7;
+  --input-bg: rgba(255, 255, 255, 0.06);
+  --input-border: rgba(255, 255, 255, 0.15);
+  --danger: #ff453a;
+  --panel-bg: #101014;
+  --panel-shadow: var(--glass-shadow);
+  --modal-overlay: rgba(0, 0, 0, 0.6);
+  --success: #34c759;
+  --text-on-accent: #ffffff;
+  --accent-shadow: rgba(79, 140, 255, 0.28);
+  --accent-shadow-strong: rgba(79, 140, 255, 0.4);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f2f4f9;
   --glass-bg: rgba(255, 255, 255, 0.5);
   --glass-bg-strong: rgba(255, 255, 255, 0.72);
   --glass-border: rgba(255, 255, 255, 0.65);
-  --glass-highlight: rgba(255, 255, 255, 0.55); /* 顶部高光 */
+  --glass-highlight: rgba(255, 255, 255, 0.55);
   --glass-shadow:
     0 0 0 0.5px rgba(0, 0, 0, 0.02),
     0 4px 12px rgba(0, 0, 0, 0.05),
     0 12px 32px rgba(0, 0, 0, 0.08);
-  --blur: 28px;
   --text: #1d1d1f;
   --text-secondary: #86868b;
   --accent: #0071e3;
@@ -27,31 +69,12 @@
   --input-bg: rgba(255, 255, 255, 0.7);
   --input-border: rgba(0, 0, 0, 0.1);
   --danger: #ff3b30;
-  --panel-shadow: var(--glass-shadow);
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-[data-theme='dark'] {
-  --bg: #151517;
-  --glass-bg: rgba(34, 34, 38, 0.55);
-  --glass-bg-strong: rgba(34, 34, 38, 0.8);
-  --glass-border: rgba(255, 255, 255, 0.14);
-  --glass-highlight: rgba(255, 255, 255, 0.1);
-  --glass-shadow:
-    0 0 0 0.5px rgba(0, 0, 0, 0.3),
-    0 4px 12px rgba(0, 0, 0, 0.35),
-    0 12px 32px rgba(0, 0, 0, 0.5);
-  --text: #f5f5f7;
-  --text-secondary: #98989d;
-  --accent: #2997ff;
-  --accent-soft: rgba(41, 151, 255, 0.18);
-  --hover-bg: rgba(255, 255, 255, 0.08);
-  --hover-bg-strong: rgba(255, 255, 255, 0.14);
-  --bubble-ai-bg: rgba(255, 255, 255, 0.1);
-  --bubble-ai-text: #f5f5f7;
-  --input-bg: rgba(44, 44, 48, 0.7);
-  --input-border: rgba(255, 255, 255, 0.16);
-  --danger: #ff453a;
+  --panel-bg: #ffffff;
+  --modal-overlay: rgba(0, 0, 0, 0.35);
+  --success: #34c759;
+  --text-on-accent: #ffffff;
+  --accent-shadow: rgba(0, 113, 227, 0.28);
+  --accent-shadow-strong: rgba(0, 113, 227, 0.4);
 }
 
 body {
@@ -61,22 +84,22 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   background:
+    radial-gradient(at 12% 0%, rgba(94, 92, 230, 0.17) 0, transparent 55%),
+    radial-gradient(at 92% 8%, rgba(79, 140, 255, 0.15) 0, transparent 50%),
+    radial-gradient(at 88% 96%, rgba(255, 85, 148, 0.1) 0, transparent 55%),
+    radial-gradient(at 6% 96%, rgba(88, 214, 141, 0.08) 0, transparent 50%),
+    linear-gradient(180deg, #0a0a0e 0%, #060608 100%);
+  background-attachment: fixed;
+  transition: background 0.25s, color 0.25s;
+}
+
+[data-theme='light'] body {
+  background:
     radial-gradient(at 0% 0%, rgba(122, 119, 208, 0.28) 0, transparent 52%),
     radial-gradient(at 98% 8%, rgba(0, 113, 227, 0.22) 0, transparent 48%),
     radial-gradient(at 100% 100%, rgba(255, 126, 182, 0.2) 0, transparent 50%),
     radial-gradient(at 8% 100%, rgba(88, 214, 141, 0.18) 0, transparent 46%),
     linear-gradient(180deg, #f6f7fb 0%, #e9edf4 100%);
-  background-attachment: fixed;
-  transition: background 0.25s, color 0.25s;
-}
-
-[data-theme='dark'] body {
-  background:
-    radial-gradient(at 0% 0%, rgba(122, 119, 208, 0.22) 0, transparent 52%),
-    radial-gradient(at 98% 8%, rgba(41, 151, 255, 0.18) 0, transparent 48%),
-    radial-gradient(at 100% 100%, rgba(255, 85, 148, 0.16) 0, transparent 50%),
-    radial-gradient(at 8% 100%, rgba(88, 214, 141, 0.12) 0, transparent 46%),
-    linear-gradient(180deg, #1b1b1f 0%, #111113 100%);
 }
 
 /* 滚动条 */
@@ -88,22 +111,22 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.24);
   border-radius: 5px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.38);
 }
-
-[data-theme='dark'] {
-  scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+:root {
+  scrollbar-color: rgba(255, 255, 255, 0.24) transparent;
   scrollbar-width: thin;
 }
-[data-theme='dark'] ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.28);
+
+[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
 }
-[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
+[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 
 /* 通用毛玻璃质感（用于面板/卡片） */
@@ -125,7 +148,7 @@ body {
   transform: scale(0.97);
 }
 
-/* ============ 动画（Apple 风格：spring 感 + 材质浮现） ============ */
+/* ============ 动画（300–600ms ease-out 规范） ============ */
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(18px) scale(0.98); filter: blur(6px); }
   to   { opacity: 1; transform: none; filter: blur(0); }
@@ -165,16 +188,16 @@ body::after {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='160' viewBox='0 0 260 160'%3E%3Cg fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' opacity='1'%3E%3C!-- 潦草竖线波形（每条都用 path 微曲线，模拟手画）--%3E%3Cpath d='M18 78 q-1 -32 1 -28'/%3E%3Cpath d='M44 50 q-2 30 1 50'/%3E%3Cpath d='M72 20 q-3 60 0 100'/%3E%3Cpath d='M100 60 q-1 20 1 30'/%3E%3Cpath d='M128 30 q-2 50 1 80'/%3E%3Cpath d='M156 70 q-1 15 0 25'/%3E%3Cpath d='M184 28 q-3 50 1 82'/%3E%3Cpath d='M212 52 q-1 25 0 40'/%3E%3Cpath d='M240 18 q-2 55 1 88'/%3E%3C/g%3E%3C!-- 手绘小音符 --%3E%3Cg fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M70 110 c-2 -2 1 -5 4 -5 c2.5 0 3 4 0 4.5 c-2 0.5 -3.5 0 -4 0.5'/%3E%3Cpath d='M76 108 q0 4 0 8'/%3E%3C/g%3E%3C-- 涂鸦小星 --%3E%3Cg fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M190 120 l1 4 l4 1 l-4 1 l-1 4 l-1 -4 l-4 -1 l4 -1 z'/%3E%3C/g%3E%3C-- 涂鸦弧线 --%3E%3Cpath d='M140 8 q5 4 0 8' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='160' viewBox='0 0 260 160'%3E%3Cg fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' opacity='1'%3E%3Cpath d='M18 78 q-1 -32 1 -28'/%3E%3Cpath d='M44 50 q-2 30 1 50'/%3E%3Cpath d='M72 20 q-3 60 0 100'/%3E%3Cpath d='M100 60 q-1 20 1 30'/%3E%3Cpath d='M128 30 q-2 50 1 80'/%3E%3Cpath d='M156 70 q-1 15 0 25'/%3E%3Cpath d='M184 28 q-3 50 1 82'/%3E%3Cpath d='M212 52 q-1 25 0 40'/%3E%3Cpath d='M240 18 q-2 55 1 88'/%3E%3C/g%3E%3Cg fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M70 110 c-2 -2 1 -5 4 -5 c2.5 0 3 4 0 4.5 c-2 0.5 -3.5 0 -4 0.5'/%3E%3Cpath d='M76 108 q0 4 0 8'/%3E%3C/g%3E%3Cg fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M190 120 l1 4 l4 1 l-4 1 l-1 4 l-1 -4 l-4 -1 l4 -1 z'/%3E%3C/g%3E%3Cpath d='M140 8 q5 4 0 8' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
   background-size: 260px 160px;
   opacity: 0.07;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.7), transparent 85%);
   -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.7), transparent 85%);
 }
 
-[data-theme='dark'] body::after {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='160' viewBox='0 0 260 160'%3E%3Cg fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' opacity='1'%3E%3Cpath d='M18 78 q-1 -32 1 -28'/%3E%3Cpath d='M44 50 q-2 30 1 50'/%3E%3Cpath d='M72 20 q-3 60 0 100'/%3E%3Cpath d='M100 60 q-1 20 1 30'/%3E%3Cpath d='M128 30 q-2 50 1 80'/%3E%3Cpath d='M156 70 q-1 15 0 25'/%3E%3Cpath d='M184 28 q-3 50 1 82'/%3E%3Cpath d='M212 52 q-1 25 0 40'/%3E%3Cpath d='M240 18 q-2 55 1 88'/%3E%3C/g%3E%3Cg fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M70 110 c-2 -2 1 -5 4 -5 c2.5 0 3 4 0 4.5 c-2 0.5 -3.5 0 -4 0.5'/%3E%3Cpath d='M76 108 q0 4 0 8'/%3E%3C/g%3E%3Cg fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M190 120 l1 4 l4 1 l-4 1 l-1 4 l-1 -4 l-4 -1 l4 -1 z'/%3E%3C/g%3E%3Cpath d='M140 8 q5 4 0 8' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
-  opacity: 0.08;
+[data-theme='light'] body::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='160' viewBox='0 0 260 160'%3E%3Cg fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' opacity='1'%3E%3Cpath d='M18 78 q-1 -32 1 -28'/%3E%3Cpath d='M44 50 q-2 30 1 50'/%3E%3Cpath d='M72 20 q-3 60 0 100'/%3E%3Cpath d='M100 60 q-1 20 1 30'/%3E%3Cpath d='M128 30 q-2 50 1 80'/%3E%3Cpath d='M156 70 q-1 15 0 25'/%3E%3Cpath d='M184 28 q-3 50 1 82'/%3E%3Cpath d='M212 52 q-1 25 0 40'/%3E%3Cpath d='M240 18 q-2 55 1 88'/%3E%3C/g%3E%3Cg fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M70 110 c-2 -2 1 -5 4 -5 c2.5 0 3 4 0 4.5 c-2 0.5 -3.5 0 -4 0.5'/%3E%3Cpath d='M76 108 q0 4 0 8'/%3E%3C/g%3E%3Cg fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M190 120 l1 4 l4 1 l-4 1 l-1 4 l-1 -4 l-4 -1 l4 -1 z'/%3E%3C/g%3E%3Cpath d='M140 8 q5 4 0 8' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+  opacity: 0.07;
 }
 
 /* 减少动效偏好 */
@@ -192,7 +215,7 @@ body::after {
   .chat-panel,
   .classify-flow,
   .modal-card {
-    background: var(--panel-bg, #fff);
+    background: var(--panel-bg);
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }

@@ -1,14 +1,18 @@
 <template>
-  <div class="home-view">
-    <!-- Hero：平台 + 输入 + 产出，一句话说清 -->
-    <div class="hero anim-fade-up">
-      <p class="eyebrow">仅支持 · 网易云音乐 NetEase Cloud Music</p>
-      <h1 class="hero-title">连接你的网易云，把 500 首乱糟糟的收藏<br />自动按情绪/曲风拆成井井有条的歌单</h1>
-      <p class="hero-desc">
-        登录即读取你的歌单与收藏 · AI 分析歌名、歌手、歌词与评论 · 一键新建分类歌单，不删一首，原歌单不动
+  <div ref="rootEl" class="home-view">
+    <ParticleField />
+
+    <!-- ============ HERO：全屏情感入口 ============ -->
+    <section class="hero">
+      <p class="eyebrow hero-el">仅支持 · 网易云音乐</p>
+      <h1 class="hero-title hero-el">
+        用情绪，整理<br />你的<span class="grad">音乐世界</span>。
+      </h1>
+      <p class="hero-desc hero-el">
+        连接网易云账号，AI 读取你的歌单与收藏，按情绪 / 曲风 / 语种 / 热度
+        自动拆成井井有条的新歌单 —— 不删一首，原歌单原样保留。
       </p>
-      <!-- 登录前权限承诺（折叠式，三句话） -->
-      <div v-if="!loggedIn" class="trust-strip glass">
+      <div v-if="!loggedIn" class="trust-strip glass hero-el">
         <span class="trust-dot" aria-hidden="true">●</span>
         <span>仅请求「读取歌单」权限</span>
         <span class="sep">·</span>
@@ -16,73 +20,136 @@
         <span class="sep">·</span>
         <span>可随时在网易云账号中撤销授权</span>
       </div>
-      <p v-else class="trust-strip-ok">已连接 · 随时可在头像菜单退出并撤销授权</p>
-    </div>
+      <p v-else class="trust-strip-ok hero-el">已连接 · 随时可在头像菜单退出并撤销授权</p>
+      <div class="scroll-cue hero-el" aria-hidden="true">
+        <span class="cue-line"></span>
+        <span class="cue-text">SCROLL</span>
+      </div>
+    </section>
 
-    <!-- Before / After 对比图：静态示例，不靠想象 -->
-    <div class="before-after glass anim-fade-up" style="animation-delay: 80ms">
-      <div class="ba-col ba-before">
-        <p class="ba-label">整理前 · 一个大杂烩</p>
-        <div class="ba-stack">
-          <span class="ba-pill ba-pill--mess">我喜欢的音乐 482 首 ▶</span>
-          <span class="ba-hint">摇滚和民谣混一起 · 找歌靠翻</span>
+    <!-- ============ 四个分类入口 ============ -->
+    <section class="section reveal">
+      <p class="section-eyebrow">四种维度 · 一键开整</p>
+      <h2 class="section-title">选一个入口</h2>
+      <div class="cards">
+        <div
+          v-for="opt in options"
+          :key="opt.mode"
+          class="card glass"
+          @click="emit('select', opt.mode)"
+          @mousemove="onCardMove"
+          @mouseleave="onCardLeave"
+        >
+          <svg class="card-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <g v-html="opt.svg"></g>
+          </svg>
+          <h3>{{ opt.title }}</h3>
+          <p class="card-desc">{{ opt.desc }}</p>
+          <span class="card-go" aria-hidden="true">→</span>
         </div>
       </div>
-      <div class="ba-arrow" aria-hidden="true">→</div>
-      <div class="ba-col ba-after">
-        <p class="ba-label">整理后 · 按你选的维度自动拆分</p>
-        <div class="ba-stack ba-stack--grid">
-          <span class="ba-pill">🌙 深夜治愈 38 首</span>
-          <span class="ba-pill">🔥 热血摇滚 54 首</span>
-          <span class="ba-pill">☕ 咖啡民谣 42 首</span>
-          <span class="ba-pill">✈️ 运动节拍 61 首</span>
+      <button class="custom-link" @click="emit('select', 'custom')">
+        自定义分类
+        <span class="arrow">→</span>
+      </button>
+      <p class="custom-hint">比如：按“适合跑步/加班/下雨天”自由描述，AI 按你的话术分</p>
+    </section>
+
+    <!-- ============ Before / After ============ -->
+    <section class="section reveal">
+      <p class="section-eyebrow">效果直观对比</p>
+      <h2 class="section-title">整理前后，一目了然</h2>
+      <div class="before-after glass">
+        <div class="ba-col ba-before">
+          <p class="ba-label">整理前 · 一个大杂烩</p>
+          <div class="ba-stack">
+            <span class="ba-pill ba-pill--mess">我喜欢的音乐 482 首 ▶</span>
+            <span class="ba-hint">摇滚和民谣混一起 · 找歌靠翻</span>
+          </div>
+        </div>
+        <div class="ba-arrow" aria-hidden="true">→</div>
+        <div class="ba-col ba-after">
+          <p class="ba-label">整理后 · 按你选的维度自动拆分</p>
+          <div class="ba-stack ba-stack--grid">
+            <span class="ba-pill">🌙 深夜治愈 38 首</span>
+            <span class="ba-pill">🔥 热血摇滚 54 首</span>
+            <span class="ba-pill">☕ 咖啡民谣 42 首</span>
+            <span class="ba-pill">✈️ 运动节拍 61 首</span>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- 四个入口：标题 + 一句话说明分类依据与产出 -->
-    <div class="cards">
-      <div
-        v-for="(opt, i) in options"
-        :key="opt.mode"
-        class="card glass anim-stagger"
-        :style="{ '--i': i }"
-        @click="emit('select', opt.mode)"
-      >
-        <svg class="card-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <g v-html="opt.svg"></g>
-        </svg>
-        <h3>{{ opt.title }}</h3>
-        <p class="card-desc">{{ opt.desc }}</p>
-      </div>
-    </div>
-
-    <!-- 自定义：小入口 -->
-    <button class="custom-link anim-fade-up" style="animation-delay: 260ms" @click="emit('select', 'custom')">
-      自定义分类
-      <span class="arrow">→</span>
-    </button>
-    <p class="custom-hint anim-fade-up" style="animation-delay: 280ms">比如：按“适合跑步/加班/下雨天”自由描述，AI 按你的话术分</p>
-
-    <!-- 怎么用 3 步 + 隐私/信任兜底 -->
-    <div class="howto anim-fade-up" style="animation-delay: 320ms">
-      <h4 class="howto-title">怎么用 · 三步完成</h4>
+    <!-- ============ 三步用法 + 信任页脚 ============ -->
+    <section class="section reveal">
+      <p class="section-eyebrow">怎么用</p>
+      <h2 class="section-title">三步完成</h2>
       <ol class="howto-steps">
-        <li><strong>登录网易云</strong> — 扫码或验证码，仅读取歌单</li>
-        <li><strong>选一个维度</strong> — 情绪 / 曲风 / 语种 / 热度，或自定义描述</li>
-        <li><strong>确认新建</strong> — 预览分类结果，确认后才批量建新歌单加歌</li>
+        <li><span class="step-no">01</span><div><strong>登录网易云</strong><p>扫码或验证码，仅读取歌单</p></div></li>
+        <li><span class="step-no">02</span><div><strong>选一个维度</strong><p>情绪 / 曲风 / 语种 / 热度，或自定义描述</p></div></li>
+        <li><span class="step-no">03</span><div><strong>确认新建</strong><p>预览分类结果，确认后才批量建新歌单加歌</p></div></li>
       </ol>
-      <p class="howto-foot">
-        免费使用 · v{{ version }} · 不会删除或修改原歌单 · 隐私与授权说明见登录弹窗 ·
-        反馈请提 <a href="https://github.com/Gary-no/netease-ai-playlist/issues" target="_blank" rel="noopener">GitHub Issue</a>
-      </p>
-    </div>
+    </section>
+
+    <footer class="foot reveal">
+      免费使用 · v{{ version }} · 不会删除或修改原歌单 · 隐私与授权说明见登录弹窗 ·
+      反馈请提 <a href="https://github.com/Gary-no/netease-ai-playlist/issues" target="_blank" rel="noopener">GitHub Issue</a>
+    </footer>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import ParticleField from './ParticleField.vue';
+
 const props = defineProps({ loggedIn: Boolean, version: String });
 const emit = defineEmits(['select']);
+
+const rootEl = ref(null);
+let ctx;
+
+gsap.registerPlugin(ScrollTrigger);
+
+onMounted(() => {
+  const root = rootEl.value;
+  ctx = gsap.context(() => {
+    // Hero 入场：依次浮现（600ms 内 ease-out）
+    gsap.from('.hero-el', {
+      y: 36,
+      opacity: 0,
+      duration: 0.6,
+      ease: 'power2.out',
+      stagger: 0.09,
+      delay: 0.1,
+    });
+    // 滚动触发：每个 section 进入视口时浮现
+    gsap.utils.toArray('.reveal').forEach((el) => {
+      gsap.from(el, {
+        y: 56,
+        opacity: 0,
+        duration: 0.6,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: el, scroller: root, start: 'top 86%' },
+      });
+    });
+  }, root);
+});
+
+onUnmounted(() => ctx && ctx.revert());
+
+// 卡片 3D 倾斜（悬停视差翻转）
+function onCardMove(e) {
+  const el = e.currentTarget;
+  const r = el.getBoundingClientRect();
+  const rx = ((e.clientY - r.top) / r.height - 0.5) * -9;
+  const ry = ((e.clientX - r.left) / r.width - 0.5) * 9;
+  gsap.to(el, { rotationX: rx, rotationY: ry, transformPerspective: 800, duration: 0.4, ease: 'power2.out' });
+}
+function onCardLeave(e) {
+  gsap.to(e.currentTarget, { rotationX: 0, rotationY: 0, duration: 0.6, ease: 'elastic.out(1, 0.55)' });
+}
 
 const options = [
   {
@@ -129,78 +196,246 @@ const options = [
 
 <style scoped>
 .home-view {
-  min-height: 100%;
+  position: relative;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  text-align: center;
+}
+.home-view > section,
+.home-view > footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============ HERO：全屏 ============ */
+.hero {
+  min-height: calc(100% - 4px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  padding: 18px 16px 28px;
-  gap: 18px;
+  justify-content: center;
+  gap: 22px;
+  padding: 40px 20px 72px;
 }
-/* Hero：单 H2，顶栏品牌为纯展示，不与正文抢 H1 */
-.hero { max-width: 640px; width: 100%; display: flex; flex-direction: column; gap: 10px; align-items: center; }
 .eyebrow {
   margin: 0;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--accent);
-  background: var(--accent-soft);
-  padding: 4px 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  padding: 7px 16px;
   border-radius: 980px;
 }
 .hero-title {
   margin: 0;
-  font-size: 28px;
-  line-height: 1.25;
+  font-family: var(--font-display);
+  font-size: clamp(44px, 8.5vw, 104px);
+  line-height: 1.04;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.035em;
   color: var(--text);
+  text-wrap: balance;
+}
+.grad {
+  background: linear-gradient(92deg, var(--accent) 0%, #a78bfa 55%, #ff7eb6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+[data-theme='light'] .grad {
+  background: linear-gradient(92deg, #0071e3 0%, #7c5cff 55%, #e0509e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 .hero-desc {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: clamp(14px, 1.6vw, 17px);
+  line-height: 1.75;
   color: var(--text-secondary);
-  max-width: 520px;
+  max-width: 560px;
 }
 .trust-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 8px;
+  gap: 6px 10px;
   align-items: center;
   justify-content: center;
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-size: 11px;
+  padding: 10px 18px;
+  border-radius: 980px;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 .trust-dot { color: var(--accent); font-size: 7px; }
 .sep { opacity: 0.4; }
 .trust-strip-ok { margin: 0; font-size: 12px; color: var(--text-secondary); }
 
-/* Before / After */
+.scroll-cue {
+  position: absolute;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.cue-line {
+  width: 1px;
+  height: 42px;
+  background: linear-gradient(180deg, var(--text-secondary), transparent);
+  animation: cue-drop 1.8s var(--ease) infinite;
+  transform-origin: top;
+}
+@keyframes cue-drop {
+  0% { transform: scaleY(0); opacity: 0; }
+  35% { transform: scaleY(1); opacity: 1; }
+  100% { transform: scaleY(1) translateY(10px); opacity: 0; }
+}
+.cue-text {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.34em;
+  color: var(--text-secondary);
+}
+
+/* ============ 通用 Section ============ */
+.section {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 96px 24px 8px;
+}
+.section-eyebrow {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.section-title {
+  margin: 0 0 40px;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4.6vw, 52px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+/* ============ 入口卡片 ============ */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  perspective: 1000px;
+}
+.card {
+  position: relative;
+  border-radius: 22px;
+  padding: 30px 20px 26px;
+  cursor: pointer;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  transform-style: preserve-3d;
+  transition: border-color 0.3s var(--ease), background 0.3s var(--ease), box-shadow 0.3s var(--ease);
+  will-change: transform;
+}
+.card:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 18px 48px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--accent-soft);
+}
+.card-icon {
+  width: 44px;
+  height: 44px;
+  color: var(--accent);
+  transition: transform 0.32s var(--ease);
+}
+.card:hover .card-icon { transform: translateY(-3px) scale(1.08); }
+.card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.card-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  max-width: 18em;
+}
+.card-go {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  font-size: 15px;
+  color: var(--accent);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
+}
+.card:hover .card-go { opacity: 1; transform: translateX(0); }
+
+.custom-link {
+  margin-top: 30px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 26px;
+  border-radius: 980px;
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.custom-link:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-1px); }
+.custom-link .arrow { color: var(--accent); transition: transform 0.2s var(--ease); }
+.custom-link:hover .arrow { transform: translateX(4px); }
+.custom-hint { margin: 12px 0 0; font-size: 12px; color: var(--text-secondary); }
+
+/* ============ Before / After ============ */
 .before-after {
-  width: 100%;
-  max-width: 640px;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  gap: 12px;
+  gap: 18px;
   align-items: center;
-  padding: 14px;
-  border-radius: 16px;
+  padding: 26px;
+  border-radius: 22px;
   text-align: left;
 }
 .ba-col { min-width: 0; }
-.ba-label { margin: 0 0 8px; font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.02em; }
-.ba-stack { display: flex; flex-direction: column; gap: 6px; }
-.ba-stack--grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.ba-pill {
+.ba-label {
+  margin: 0 0 12px;
   font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+.ba-stack { display: flex; flex-direction: column; gap: 8px; }
+.ba-stack--grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ba-pill {
+  font-size: 13px;
   font-weight: 600;
-  padding: 7px 10px;
-  border-radius: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   color: var(--text);
@@ -209,68 +444,63 @@ const options = [
   text-overflow: ellipsis;
 }
 .ba-pill--mess { background: var(--accent-soft); border-color: transparent; }
-.ba-hint { font-size: 11px; color: var(--text-secondary); }
-.ba-arrow { font-size: 18px; color: var(--text-secondary); padding: 0 2px; }
+.ba-hint { font-size: 12px; color: var(--text-secondary); }
+.ba-arrow { font-size: 22px; color: var(--accent); padding: 0 4px; }
 
-.cards {
+/* ============ 三步用法 ============ */
+.howto-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: grid;
-  grid-template-columns: repeat(2, minmax(160px, 1fr));
-  gap: 14px;
-  width: 100%;
-  max-width: 420px;
-}
-.card {
-  border-radius: 18px;
-  padding: 18px 14px 16px;
-  cursor: pointer;
-  transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease);
-  color: var(--text);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  text-align: center;
-}
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 8px 20px rgba(0,0,0,0.08), 0 24px 56px rgba(0,0,0,0.14);
-}
-.card:active { transform: translateY(-1px) scale(0.98); }
-.card-icon { width: 40px; height: 40px; color: var(--accent); transition: transform 0.32s var(--ease); }
-.card:hover .card-icon { transform: translateY(-2px) scale(1.06); }
-.card h3 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: 0.02em; }
-.card-desc { margin: 0; font-size: 11px; line-height: 1.45; color: var(--text-secondary); max-width: 16em; }
-
-.custom-link {
-  border: none; background: none; color: var(--accent);
-  font-size: 14px; font-weight: 600; cursor: pointer;
-  display: flex; align-items: center; gap: 6px;
-  padding: 8px 16px; border-radius: 980px; transition: background 0.15s;
-}
-.custom-link:hover { background: var(--accent-soft); }
-.arrow { transition: transform 0.2s var(--ease); }
-.custom-link:hover .arrow { transform: translateX(3px); }
-.custom-hint { margin: -8px 0 0; font-size: 11px; color: var(--text-secondary); max-width: 32em; }
-
-.howto {
-  width: 100%; max-width: 640px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
   text-align: left;
-  padding: 14px 16px;
-  border-radius: 14px;
+}
+.howto-steps li {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 22px 20px;
+  border-radius: 18px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
 }
-.howto-title { margin: 0 0 8px; font-size: 13px; font-weight: 700; color: var(--text); }
-.howto-steps { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.7; color: var(--text-secondary); }
-.howto-steps strong { color: var(--text); font-weight: 600; }
-.howto-foot { margin: 10px 0 0; font-size: 11px; line-height: 1.6; color: var(--text-secondary); }
-.howto-foot a { color: var(--accent); text-decoration: none; }
-.howto-foot a:hover { text-decoration: underline; }
+.step-no {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  padding-top: 2px;
+}
+.howto-steps strong { display: block; font-size: 15px; color: var(--text); margin-bottom: 4px; }
+.howto-steps p { margin: 0; font-size: 12px; line-height: 1.6; color: var(--text-secondary); }
 
-@media (max-width: 480px) {
-  .hero-title { font-size: 22px; }
+/* ============ 页脚 ============ */
+.foot {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 80px 24px 48px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+.foot a { color: var(--accent); text-decoration: none; }
+.foot a:hover { text-decoration: underline; }
+
+/* ============ 响应式：1024 / 768 ============ */
+@media (max-width: 1023px) {
+  .cards { grid-template-columns: repeat(2, 1fr); }
+  .howto-steps { grid-template-columns: 1fr; }
+  .section { padding-top: 72px; }
+}
+@media (max-width: 767px) {
+  .cards { grid-template-columns: 1fr; gap: 12px; }
   .before-after { grid-template-columns: 1fr; }
   .ba-arrow { display: none; }
-  .cards { gap: 10px; }
+  .hero { padding-top: 24px; gap: 16px; }
+  .scroll-cue { display: none; }
 }
 </style>

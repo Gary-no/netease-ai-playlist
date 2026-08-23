@@ -503,8 +503,10 @@ function fmtDuration(sec) {
 .chip.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(0, 113, 227, 0.28);
+  color: var(--text-on-accent);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    var(--accent-shadow);
 }
 /* AI 自动匹配：始终带强调色，突出在首位 */
 .chip.auto-chip {
@@ -515,7 +517,7 @@ function fmtDuration(sec) {
 }
 .chip.auto-chip.active {
   background: var(--accent);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 .empty {
   text-align: center;
@@ -558,16 +560,16 @@ function fmtDuration(sec) {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--panel-bg);
   border: 1.5px solid var(--accent);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--glass-shadow);
   cursor: pointer;
 }
 .slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--panel-bg);
   border: 1.5px solid var(--accent);
   cursor: pointer;
 }
@@ -617,7 +619,7 @@ function fmtDuration(sec) {
 .pl-item:has(.dot.checked) {
   background: var(--accent-soft);
   border-color: var(--accent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
 }
 .dot {
   width: 18px;
@@ -785,11 +787,11 @@ function fmtDuration(sec) {
 }
 .flow-actions button.primary {
   background: var(--accent);
-  color: #fff;
-  box-shadow: 0 6px 20px rgba(0, 113, 227, 0.3);
+  color: var(--text-on-accent);
+  box-shadow: var(--accent-shadow);
 }
 .flow-actions button.primary:hover {
-  box-shadow: 0 8px 28px rgba(0, 113, 227, 0.4);
+  box-shadow: var(--accent-shadow-strong);
 }
 .flow-actions button.primary:disabled {
   opacity: 0.4;
@@ -920,7 +922,7 @@ function fmtDuration(sec) {
 .gen-btn {
   border: none;
   background: var(--accent);
-  color: #fff;
+  color: var(--text-on-accent);
   border-radius: 980px;
   padding: 7px 18px;
   font-size: 13px;
@@ -944,7 +946,7 @@ function fmtDuration(sec) {
   position: fixed;
   inset: 0;
   z-index: 130;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--modal-overlay);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   display: flex;
@@ -995,7 +997,7 @@ function fmtDuration(sec) {
 .done-actions button.primary {
   border: none;
   background: var(--accent);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 .done-actions button.ghost {
   border: 1px solid var(--input-border);
