@@ -376,21 +376,35 @@ async function startClassify() {
   }
 }
 
-// 轮询后端任务状态，前端平滑动画显示进度
+// 轮询后端任务状态，前端自主平滑增长
 async function pollTask(taskId) {
-  // 启动前端平滑动画：每 100ms 向目标值逼近 ~2%
+  // 自主平滑进度：每 100ms 按当前速率递增，不受后端跳变约束
+  let smoothRate = 0.15; // 起始速率（每帧增长）
   if (smoothTimer) clearInterval(smoothTimer);
   smoothTimer = setInterval(() => {
-    const target = progress.value;
+    const target = progress.value; // 后端报告的最新值
     const cur = smoothProgress.value;
+
+    if (cur >= 100) return;
+
+    // 后端完成时直接拉满
     if (target === 100) {
-      // 完成时快速拉到 100
-      smoothProgress.value = Math.min(100, cur + 8);
-    } else if (cur < target) {
-      // 向目标逼近，速度递减接近目标时更慢
-      const step = Math.max(0.5, (target - cur) * 0.12);
-      smoothProgress.value = Math.min(target, cur + step);
+      smoothProgress.value = Math.min(100, cur + 6);
+      return;
     }
+
+    // 若已超过后端目标，继续自主增长（但速度放缓）
+    if (cur >= target) {
+      smoothRate = Math.max(0.08, smoothRate * 0.98);
+      smoothProgress.value = Math.min(100, cur + smoothRate);
+      // 最多不超过 95%（等后端完成）
+      if (smoothProgress.value >= 95) smoothProgress.value = 95;
+      return;
+    }
+
+    // 落后于后端目标：快速追赶
+    const catchup = (target - cur) * 0.1;
+    smoothProgress.value = Math.min(target, cur + Math.max(catchup, 0.5));
   }, 100);
 
   const poll = async () => {

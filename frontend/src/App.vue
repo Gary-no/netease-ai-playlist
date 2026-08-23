@@ -111,6 +111,10 @@ const theme = ref(localStorage.getItem('ncm_theme') || 'dark');
 
 const changelog = [
   {
+    version: '0.5.2',
+    items: ['进度条自主平滑增长 — 不再卡在 45% 等待后端', '菜单 z-index 栈修复', '分类按钮始终固定在底部'],
+  },
+  {
     version: '0.5.1',
     items: ['主题切换独立为太阳/月亮图标', '版本号同步更新 0.5.0', '分类进度条平滑动画', '用户菜单 z-index 修复', '用户名区域背景色提示可点击'],
   },
