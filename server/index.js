@@ -7,6 +7,8 @@ import playlistRoutes from './routes/playlists.js';
 import classifyRoutes from './routes/classify.js';
 
 const app = express();
+// 信任反向代理（Render / Cloudflare），以正确解析 X-Forwarded-For / X-Real-IP
+app.set('trust proxy', true);
 app.use(cors());
 app.use(express.json());
 

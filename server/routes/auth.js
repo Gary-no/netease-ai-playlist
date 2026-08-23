@@ -82,8 +82,22 @@ router.post('/captcha/sent', async (req, res) => {
   if (!phone || !/^1\d{10}$/.test(String(phone))) {
     return res.status(400).json({ error: '请输入正确的手机号' });
   }
+  // 提取客户端真实 IP，透传给网易云以按“用户 IP”限流
+  // X-Forwarded-For 可能是 "client, proxy1, proxy2"，取首个即为客户端
+  const forwarded = req.headers['x-forwarded-for'];
+  const rawIp = forwarded
+    ? String(forwarded).split(',')[0].trim()
+    : req.headers['x-real-ip'] || req.ip || '';
+  // 仅透传合法的 IPv4/IPv6，忽略未知或内网占位
+  const realIP =
+    /^(\d{1,3}\.){3}\d{1,3}$/.test(rawIp) || rawIp.includes(':') ? rawIp : undefined;
   try {
-    const data = await neteaseApi.sendCaptcha(phone);
+    const data = await neteaseApi.sendCaptcha(phone, realIP ? { realIP } : {});
+    // 保持与前端 sendCaptcha 期望一致：透传 code/message
+    // 406 频繁 / 505 未知号码 等由前端展示，不在此统一 500
+    if (data.code && data.code !== 200) {
+      return res.status(200).json({ code: data.code, message: data.message || data.msg || '发送失败' });
+    }
     res.json({ code: data.code, message: data.message || '验证码已发送' });
   } catch (e) {
     res.status(500).json({ error: e.message || '发送验证码失败' });

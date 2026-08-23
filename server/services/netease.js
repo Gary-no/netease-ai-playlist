@@ -77,10 +77,10 @@ const realNetease = {
   },
 
   // 发送手机验证码
-  async sendCaptcha(phone) {
+  async sendCaptcha(phone, opts = {}) {
     try {
       const { data } = await http.get('/captcha/sent', {
-        params: params({ phone, ctcode: '86' }),
+        params: params({ phone, ctcode: '86', ...opts }),
         validateStatus: () => true,
       });
       return data;

@@ -165,14 +165,19 @@ async function sendCaptcha() {
   phoneError.value = '';
   sending.value = true;
   try {
-    await api.sendCaptcha(phone.value);
+    const res = await api.sendCaptcha(phone.value);
+    // 服务端透传网易云的 code/message：200 才算真正下发
+    if (res.code && res.code !== 200) {
+      phoneError.value = res.message || '发送失败';
+      return;
+    }
     countdown.value = 60;
     countdownTimer = setInterval(() => {
       countdown.value--;
       if (countdown.value <= 0) clearInterval(countdownTimer);
     }, 1000);
   } catch (e) {
-    phoneError.value = e.response?.data?.error || e.message || '发送验证码失败';
+    phoneError.value = e.response?.data?.error || e.response?.data?.message || e.message || '发送验证码失败';
   } finally {
     sending.value = false;
   }
