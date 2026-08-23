@@ -6,6 +6,15 @@
         <span class="version-badge">v{{ APP_VERSION }}</span>
       </div>
       <div class="user-area">
+        <button class="theme-btn" @click="toggleTheme" :title="theme === 'light' ? '暗色模式' : '亮色模式'">
+          <svg v-if="theme === 'dark'" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="8" r="3" />
+            <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" />
+          </svg>
+          <svg v-else width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 8.5A5.5 5.5 0 1 1 7.5 3a4.5 4.5 0 0 0 5.5 5.5Z" />
+          </svg>
+        </button>
         <button class="changelog-btn" @click="showChangelog = true">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="3" width="12" height="11" rx="2" />
@@ -23,9 +32,6 @@
             <span class="nickname">{{ profile.nickname }}</span>
             <span class="caret" :class="{ hidden: view !== 'home' }">▾</span>
             <div v-if="showMenu && view === 'home'" class="user-menu anim-pop">
-              <button class="menu-item" @click="toggleTheme">
-                {{ theme === 'light' ? '🌙 暗色模式' : '☀️ 亮色模式' }}
-              </button>
               <button class="menu-item danger" @click="onLogout" :disabled="loggingOut">
                 {{ loggingOut ? '退出中...' : '退出账号' }}
               </button>
@@ -104,6 +110,10 @@ const showMenu = ref(false);
 const theme = ref(localStorage.getItem('ncm_theme') || 'dark');
 
 const changelog = [
+  {
+    version: '0.5.1',
+    items: ['主题切换独立为太阳/月亮图标', '版本号同步更新 0.5.0', '分类进度条平滑动画', '用户菜单 z-index 修复', '用户名区域背景色提示可点击'],
+  },
   {
     version: '0.5',
     items: ['HomeView 精简重构 — 移除分类入口，滑到底 CTA 开始', '逐字滚动动画，模仿 itsoffbrand 文字效果', '手机端适配'],
@@ -263,6 +273,23 @@ async function onLogout() {
   border-color: var(--border-strong);
   color: var(--text-secondary);
 }
+.theme-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.theme-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  color: var(--text-secondary);
+}
 .avatar {
   width: 32px;
   height: 32px;
@@ -296,19 +323,21 @@ async function onLogout() {
   cursor: pointer;
   padding: 6px 12px;
   border-radius: 20px;
-  border: 1px solid transparent;
+  border: 1px solid var(--border);
+  background: var(--surface);
   transition: background 0.15s, border-color 0.15s;
 }
 .user-menu-wrap:hover {
-  background: var(--hover-bg-strong);
-  border-color: var(--accent);
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
 }
 .user-menu-wrap.not-clickable {
   cursor: default;
+  opacity: 0.6;
 }
 .user-menu-wrap.not-clickable:hover {
-  background: transparent;
-  border-color: transparent;
+  background: var(--surface);
+  border-color: var(--border);
 }
 .avatar-fallback {
   display: flex;
@@ -332,11 +361,11 @@ async function onLogout() {
   background: var(--glass-bg-strong);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--panel-shadow);
+  box-shadow: var(--glass-shadow);
   padding: 5px;
-  z-index: 60;
+  z-index: 1000;
 }
 .menu-item {
   display: block;
