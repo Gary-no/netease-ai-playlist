@@ -2,6 +2,7 @@
   <div v-if="visible" class="login-modal">
     <div class="modal-card anim-spring">
       <h3>登录网易云音乐</h3>
+      <p class="login-perm-hint">仅请求读取歌单权限 · 不改、不删你的歌单 · 可在网易云账号中随时撤销授权</p>
 
       <!-- 登录方式切换 -->
       <div class="tabs">
@@ -235,9 +236,15 @@ watch(
   text-align: center;
 }
 .modal-card h3 {
-  margin: 0 0 16px;
+  margin: 0 0 6px;
   color: var(--text);
   font-size: 18px;
+}
+.login-perm-hint {
+  margin: 0 0 14px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 .tabs {
   display: flex;

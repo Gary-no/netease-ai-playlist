@@ -1,8 +1,8 @@
 <template>
   <div class="app">
     <header class="app-header">
-      <div class="brand">
-        <h1 class="brand-title">Playlist Helper</h1>
+      <div class="brand" aria-label="Playlist Helper">
+        <div class="brand-title" role="img" aria-label="Playlist Helper">Playlist Helper</div>
         <span class="version-badge">v{{ APP_VERSION }}</span>
       </div>
       <div class="user-area">
@@ -33,7 +33,7 @@
     <main class="app-main">
       <Transition name="view" mode="out-in">
         <!-- 一级界面：分类入口 -->
-        <HomeView v-if="view === 'home'" key="home" @select="onSelectMode" />
+        <HomeView v-if="view === 'home'" key="home" :logged-in="!!profile" :version="APP_VERSION" @select="onSelectMode" />
 
         <!-- 二级界面：一键分类流程 -->
         <ClassifyFlow
