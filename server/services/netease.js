@@ -91,10 +91,10 @@ const realNetease = {
   },
 
   // 手机验证码登录
-  async loginByCellphone(phone, captcha) {
+  async loginByCellphone(phone, captcha, opts = {}) {
     try {
       const { data } = await http.get('/login/cellphone', {
-        params: params({ phone, captcha, ctcode: '86' }),
+        params: params({ phone, captcha, ctcode: '86', ...opts }),
         validateStatus: () => true,
       });
       if (data.cookie) data.cookie = sanitizeCookie(data.cookie);

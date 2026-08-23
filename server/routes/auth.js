@@ -113,10 +113,22 @@ router.post('/cellphone', async (req, res) => {
   const sessionId = req.headers['x-session-id'];
   if (!sessionId) return res.status(400).json({ error: '缺少会话标识' });
 
+  const forwarded = req.headers['x-forwarded-for'];
+  const rawIp = forwarded
+    ? String(forwarded).split(',')[0].trim()
+    : req.headers['x-real-ip'] || req.ip || '';
+  const realIP =
+    /^(\d{1,3}\.){3}\d{1,3}$/.test(rawIp) || rawIp.includes(':') ? rawIp : undefined;
+
   try {
-    const data = await neteaseApi.loginByCellphone(phone, captcha);
+    const data = await neteaseApi.loginByCellphone(phone, captcha, realIP ? { realIP } : {});
     if (data.code !== 200 || !data.cookie) {
-      return res.status(400).json({ error: data.message || data.msg || '验证码错误或已过期' });
+      // 网易云风控/错误码透传为 error（loginByCellphone 已用 validateStatus 保留响应体）
+      const msg = data.message || data.msg || '验证码错误或已过期';
+      // 503 服务繁忙 / 509 风控 等保留原始 code 便于前端展示
+      const payload = { error: msg };
+      if (data.code) payload.code = data.code;
+      return res.status(400).json(payload);
     }
     const profile = {
       userId: data.account?.id ?? data.profile?.userId,
