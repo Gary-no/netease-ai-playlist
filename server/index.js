@@ -5,6 +5,8 @@ import authRoutes from './routes/auth.js';
 import chatRoutes from './routes/chat.js';
 import playlistRoutes from './routes/playlists.js';
 import classifyRoutes from './routes/classify.js';
+import adminRoutes from './routes/admin.js';
+import { trackLogin, trackClassify, trackError } from './services/admin.js';
 
 const app = express();
 // 信任反向代理（Render / Cloudflare），以正确解析 X-Forwarded-For / X-Real-IP
@@ -31,6 +33,30 @@ app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/playlists', playlistRoutes);
 app.use('/api/classify', classifyRoutes);
+app.use('/api/admin', adminRoutes);
+
+// 数据追踪中间件（包装 res.json 以捕获响应）
+app.use((req, res, next) => {
+  const oldJson = res.json.bind(res);
+  res.json = function (body) {
+    // 追踪登录成功
+    if (req.originalUrl === '/api/auth/cellphone' && req.method === 'POST' && res.statusCode === 200 && body?.profile) {
+      const phone = req.body?.phone;
+      if (phone) trackLogin(phone, body.profile.userId);
+    }
+    // 追踪分类
+    if (req.originalUrl === '/api/classify/start' && req.method === 'POST' && res.statusCode === 200) {
+      const mode = req.body?.mode || 'genre';
+      trackClassify(mode);
+    }
+    // 追踪错误 (500)
+    if (res.statusCode >= 500) {
+      trackError(req.body?.phone || '', req.method, req.originalUrl, body?.error || '服务器错误');
+    }
+    return oldJson(body);
+  };
+  next();
+});
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 

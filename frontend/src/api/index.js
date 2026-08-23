@@ -119,4 +119,16 @@ export const api = {
     const { data } = await http.get(`/playlists/${id}`);
     return data;
   },
+
+  // ===== 后台管理 =====
+  async verifyAdminPassword(password) {
+    const { data } = await http.post('/admin/verify', { password });
+    return data;
+  },
+  async getAdminStats(token) {
+    const { data } = await http.get('/admin/stats', {
+      headers: { 'X-Admin-Token': token },
+    });
+    return data;
+  },
 };

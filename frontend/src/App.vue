@@ -32,6 +32,7 @@
             <span class="nickname">{{ profile.nickname }}</span>
             <span class="caret" :class="{ hidden: view !== 'home' }">▾</span>
             <div v-if="showMenu && view === 'home'" class="user-menu anim-pop">
+              <button v-if="isAdmin" class="menu-item" @click="onAdmin">后台管理</button>
               <button class="menu-item danger" @click="onLogout" :disabled="loggingOut">
                 {{ loggingOut ? '退出中...' : '退出账号' }}
               </button>
@@ -56,7 +57,7 @@
           @back="view = 'home'"
         />
 
-        <div v-else key="custom" class="custom-wrap">
+        <div v-else-if="view === 'custom'" key="custom" class="custom-wrap">
           <div class="custom-header">
             <button class="back-btn" @click="view = 'home'">‹ 返回</button>
             <h3>自定义分类</h3>
@@ -64,6 +65,9 @@
           <ChatPanel :logged-in="!!profile" />
         </div>
       </Transition>
+
+      <!-- 后台管理 -->
+      <AdminView v-if="view === 'admin'" key="admin" @back="view = 'home'" />
     </main>
 
     <LoginModal :visible="showLogin" @close="showLogin = false" @success="onLoginSuccess" />
@@ -89,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { api, clearSessionId } from './api';
 import pkg from '../package.json';
 import LoginModal from './components/LoginModal.vue';
@@ -97,6 +101,7 @@ import HomeView from './components/HomeView.vue';
 import SelectView from './components/SelectView.vue';
 import ClassifyFlow from './components/ClassifyFlow.vue';
 import ChatPanel from './components/ChatPanel.vue';
+import AdminView from './components/AdminView.vue';
 
 const APP_VERSION = pkg.version;
 
@@ -109,7 +114,18 @@ const loggingOut = ref(false);
 const showMenu = ref(false);
 const theme = ref(localStorage.getItem('ncm_theme') || 'dark');
 
+// 判断是否为管理员（昵称 lbz老班长- 或手机号 13310843113）
+const isAdmin = computed(() => {
+  const p = profile.value;
+  if (!p) return false;
+  return p.nickname === 'lbz老班长-' || p.phone === '13310843113';
+});
+
 const changelog = [
+  {
+    version: '0.5.4',
+    items: ['新增后台管理面板（仅管理员可见）', '数据追踪：用户数、活跃、分类统计、报错日志', '密码验证访问'],
+  },
   {
     version: '0.5.3',
     items: ['补全 0.1.1~0.4.3 历史更新日志', '分类选择页增加退出按钮'],
@@ -230,6 +246,11 @@ onUnmounted(() => {
 
 function onStart() {
   view.value = 'select';
+}
+
+function onAdmin() {
+  showMenu.value = false;
+  view.value = 'admin';
 }
 
 function onSelectMode(mode) {
@@ -463,6 +484,7 @@ async function onLogout() {
   flex: 1;
   min-height: 0;
   padding-bottom: 16px;
+  position: relative;
 }
 .custom-wrap {
   height: 100%;
