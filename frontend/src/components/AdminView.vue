@@ -67,6 +67,16 @@
           <span class="error-msg">{{ e.message }}</span>
         </div>
       </div>
+
+      <h3 class="dash-section-title">反馈</h3>
+      <div v-if="!stats.feedbacks.length" class="dash-empty">暂无反馈</div>
+      <div v-else class="error-list">
+        <div v-for="(f, i) in stats.feedbacks" :key="i" class="feedback-item">
+          <span class="error-time">{{ fmtTime(f.time) }}</span>
+          <span class="fb-nickname">{{ f.nickname }}</span>
+          <span class="fb-content">{{ f.content }}</span>
+        </div>
+      </div>
     </div>
 
     <div v-else class="admin-loading">加载中…</div>
@@ -363,6 +373,26 @@ onMounted(() => {
   color: var(--danger);
   flex: 1;
   min-width: 100px;
+}
+.feedback-item {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  flex-wrap: wrap;
+  flex-direction: column;
+}
+.fb-nickname {
+  font-weight: 600;
+  color: var(--accent);
+  font-size: 12px;
+}
+.fb-content {
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 .admin-loading {
   font-size: 14px;

@@ -131,4 +131,10 @@ export const api = {
     });
     return data;
   },
+
+  // ===== 反馈 =====
+  async submitFeedback(nickname, content) {
+    const { data } = await http.post('/admin/feedback', { nickname, content });
+    return data;
+  },
 };

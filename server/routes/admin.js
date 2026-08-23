@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getStats, verifyPassword } from '../services/admin.js';
+import { getStats, verifyPassword, trackFeedback } from '../services/admin.js';
 
 const router = Router();
 
@@ -35,6 +35,14 @@ router.get('/stats', (req, res) => {
     return res.status(401).json({ error: 'token 无效' });
   }
   res.json(getStats());
+});
+
+// 用户提交反馈（无需验证）
+router.post('/feedback', (req, res) => {
+  const { nickname, content } = req.body || {};
+  if (!content || !content.trim()) return res.status(400).json({ error: '请输入反馈内容' });
+  trackFeedback(nickname || '匿名用户', content.trim());
+  res.json({ success: true });
 });
 
 export default router;

@@ -21,6 +21,7 @@ const DEFAULT = {
     custom: 0,
   },
   totalClassify: 0,
+  feedbacks: [],    // [{ time, nickname, content }]
 };
 
 function today() {
@@ -78,6 +79,14 @@ export function trackError(phone, method, url, message) {
   save(data);
 }
 
+// 记录用户反馈
+export function trackFeedback(nickname, content) {
+  const data = load();
+  data.feedbacks.unshift({ time: new Date().toISOString(), nickname, content });
+  if (data.feedbacks.length > 200) data.feedbacks = data.feedbacks.slice(0, 200);
+  save(data);
+}
+
 // 获取统计数据
 export function getStats() {
   const data = load();
@@ -102,6 +111,7 @@ export function getStats() {
     totalClassify: data.totalClassify,
     classifyStats: data.classifyStats,
     errors: data.errors.slice(0, 50),
+    feedbacks: data.feedbacks.slice(0, 50),
   };
 }
 

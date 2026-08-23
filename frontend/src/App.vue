@@ -15,6 +15,12 @@
             <path d="M13 8.5A5.5 5.5 0 1 1 7.5 3a4.5 4.5 0 0 0 5.5 5.5Z" />
           </svg>
         </button>
+        <button class="changelog-btn" @click="showFeedback = true" title="反馈">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12.5V3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H6l-3 2.5Z" />
+            <path d="M5.5 5.5h5M5.5 8h3" />
+          </svg>
+        </button>
         <button class="changelog-btn" @click="showChangelog = true">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="3" width="12" height="11" rx="2" />
@@ -72,6 +78,29 @@
 
     <LoginModal :visible="showLogin" @close="showLogin = false" @success="onLoginSuccess" />
 
+    <!-- 反馈弹窗 -->
+    <div v-if="showFeedback" class="changelog-overlay" @click.self="showFeedback = false">
+      <div class="changelog-card anim-spring" style="width:380px">
+        <div class="changelog-head">
+          <h3>反馈</h3>
+          <button class="changelog-close" @click="showFeedback = false">✕</button>
+        </div>
+        <textarea
+          v-model="feedbackContent"
+          class="feedback-input"
+          rows="4"
+          placeholder="描述你的问题或建议…"
+        ></textarea>
+        <p v-if="feedbackSent" class="feedback-done">已收到，谢谢反馈！</p>
+        <button
+          v-if="!feedbackSent"
+          class="feedback-submit"
+          :disabled="!feedbackContent.trim() || feedbackSending"
+          @click="onSubmitFeedback"
+        >{{ feedbackSending ? '发送中…' : '发送' }}</button>
+      </div>
+    </div>
+
     <!-- 更新日志弹窗 -->
     <div v-if="showChangelog" class="changelog-overlay" @click.self="showChangelog = false">
       <div class="changelog-card anim-spring">
@@ -109,6 +138,10 @@ const view = ref('home'); // home | select | classify | custom
 const classifyMode = ref('genre');
 const showLogin = ref(false);
 const showChangelog = ref(false);
+const showFeedback = ref(false);
+const feedbackContent = ref('');
+const feedbackSending = ref(false);
+const feedbackSent = ref(false);
 const profile = ref(null);
 const loggingOut = ref(false);
 const showMenu = ref(false);
@@ -122,6 +155,10 @@ const isAdmin = computed(() => {
 });
 
 const changelog = [
+  {
+    version: '0.5.5',
+    items: ['右上角新增反馈按钮（气泡图标）', '用户可提交文字反馈，后台管理页查看', '后台管理新增反馈列表'],
+  },
   {
     version: '0.5.4',
     items: ['新增后台管理面板（仅管理员可见）', '数据追踪：用户数、活跃、分类统计、报错日志', '密码验证访问'],
@@ -251,6 +288,20 @@ function onStart() {
 function onAdmin() {
   showMenu.value = false;
   view.value = 'admin';
+}
+
+async function onSubmitFeedback() {
+  const text = feedbackContent.value.trim();
+  if (!text) return;
+  feedbackSending.value = true;
+  try {
+    await api.submitFeedback(profile.value?.nickname || '', text);
+    feedbackSent.value = true;
+  } catch {
+    // 失败不阻塞
+  } finally {
+    feedbackSending.value = false;
+  }
 }
 
 function onSelectMode(mode) {
@@ -580,6 +631,45 @@ async function onLogout() {
 }
 .changelog-close:hover {
   background: var(--hover-bg);
+}
+.feedback-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--font);
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+.feedback-input:focus {
+  border-color: var(--border-strong);
+}
+.feedback-submit {
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #1d1d1d;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.feedback-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.feedback-done {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
 }
 .changelog-body {
   overflow-y: auto;
