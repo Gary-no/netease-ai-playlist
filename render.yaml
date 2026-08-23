@@ -30,7 +30,8 @@ services:
           name: netease-api
           property: host
       - key: LLM_BASE_URL
-        value: https://api.deepseek.com
+        # 必须带 /v1，否则 DeepSeek 接口返回 404
+        value: https://api.deepseek.com/v1
       - key: LLM_API_KEY          # 敏感：在 Render 控制台手动填
         sync: false
       - key: LLM_MODEL

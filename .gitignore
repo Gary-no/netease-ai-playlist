@@ -5,3 +5,6 @@ dist_check*/
 server/data/
 *.log
 .DS_Store
+
+# 本地临时起的网易云 API（仓库已 vendor NeteaseCloudMusicApi/）
+ncm-api/
