@@ -1,5 +1,6 @@
 <template>
   <div ref="rootEl" class="select-view">
+    <button class="close-btn" @click="emit('back')" aria-label="退出">✕</button>
     <div class="select-inner">
       <p class="select-label">选择分类维度</p>
       <h2 class="select-title">按什么整理？</h2>
@@ -28,7 +29,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import gsap from 'gsap';
 
-const emit = defineEmits(['select']);
+const emit = defineEmits(['select', 'back']);
 const rootEl = ref(null);
 let ctx;
 
@@ -58,6 +59,7 @@ onUnmounted(() => ctx && ctx.revert());
   align-items: center;
   justify-content: center;
   background: var(--bg);
+  position: relative;
 }
 .select-inner {
   max-width: 520px;
@@ -135,6 +137,29 @@ onUnmounted(() => ctx && ctx.revert());
 .custom-btn:hover { background: var(--surface-hover); border-color: var(--border-strong); }
 .custom-btn span { transition: transform 0.2s var(--ease); }
 .custom-btn:hover span { transform: translateX(4px); }
+.close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+  z-index: 2;
+}
+.close-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  color: var(--text-secondary);
+}
 
 @media (max-width: 480px) {
   .grid { grid-template-columns: 1fr; }

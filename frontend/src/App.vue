@@ -111,8 +111,12 @@ const theme = ref(localStorage.getItem('ncm_theme') || 'dark');
 
 const changelog = [
   {
+    version: '0.5.3',
+    items: ['补全 0.1.1~0.4.3 历史更新日志', '分类选择页增加退出按钮'],
+  },
+  {
     version: '0.5.2',
-    items: ['进度条自主平滑增长 — 不再卡在 45% 等待后端', '菜单 z-index 栈修复', '分类按钮始终固定在底部'],
+    items: ['进度条自主平滑增长 — 不再卡在 45% 等待后端'],
   },
   {
     version: '0.5.1',
@@ -123,7 +127,35 @@ const changelog = [
     items: ['HomeView 精简重构 — 移除分类入口，滑到底 CTA 开始', '逐字滚动动画，模仿 itsoffbrand 文字效果', '手机端适配'],
   },
   {
+    version: '0.4.3',
+    items: ['菜单 z-index 二次修复（app-header 堆叠上下文）', '分类按钮始终固定在底部，歌单未加载时不上移'],
+  },
+  {
+    version: '0.4.2',
+    items: ['主题切换从菜单独立为太阳/月亮 SVG 图标', '用户菜单 z-index 60→1000', '用户名区域默认背景色+边框，hover 加深可点击提示'],
+  },
+  {
+    version: '0.4.1',
+    items: ['版本号同步 0.5.0', '分类进度条平滑动画（渲染 25%→45%→100% 不再跳变）'],
+  },
+  {
     version: '0.4',
+    items: ['新增分类选择页"按什么整理？"', '右上角更新日志弹窗', 'CTA 点击先进入选择页再进分类流程'],
+  },
+  {
+    version: '0.3.4',
+    items: ['HomeView 大精简 — 移除入口卡片，滑到底 CTA 进入', '文案大幅精简，信任条合并为一句'],
+  },
+  {
+    version: '0.3.3',
+    items: ['全面模仿 itsoffbrand 灰度风格', '移除所有彩色与粒子效果', '纯灰 #1d1d1d 背景 #e5e4e0 文字'],
+  },
+  {
+    version: '0.3.2',
+    items: ['底部全屏 CTA"现在开始"区块'],
+  },
+  {
+    version: '0.3.1',
     items: ['全面 itsoffbrand 灰度风格视觉改版', '暗色默认主题，亮色可切换', '19 处硬编码颜色替换为 CSS 变量'],
   },
   {
@@ -131,8 +163,36 @@ const changelog = [
     items: ['首屏信息架构重构 — 信任设计、Before/After 对比', '登录权限承诺与隐私说明'],
   },
   {
+    version: '0.2.5',
+    items: ['登录风控修复 — loginByCellphone 同步透传真实 IP'],
+  },
+  {
+    version: '0.2.4',
+    items: ['验证码 406 限流修复 — 真实 IP 透传破 Render 共享 IP 限制'],
+  },
+  {
+    version: '0.2.3',
+    items: ['右上角改为"登录"', '验证码登录与扫码登录面板均增加关闭按钮'],
+  },
+  {
+    version: '0.2.2',
+    items: ['NETEASE_API_BASE 修复两轮 — Invalid URL + ENOTFOUND', '配置层 normalizeBase 完整兼容裸主机名/完整 URL/localhost'],
+  },
+  {
+    version: '0.2.1',
+    items: ['render.yaml 的 LLM_BASE_URL 补 /v1', '忽略本地 ncm-api 临时目录'],
+  },
+  {
     version: '0.2',
-    items: ['分类流程改为异步任务 + 真进度轮询', 'GitHub Actions 定时保活'],
+    items: ['分类流程改为异步任务 + 真进度轮询，解决 Render 50s 超时', 'GitHub Actions 定时保活（每 10 分钟 ping）'],
+  },
+  {
+    version: '0.1.2',
+    items: ['验证码登录错误透传', 'GitHub Actions 保活工作流'],
+  },
+  {
+    version: '0.1.1',
+    items: ['Render.yaml 部署配置（网易云 API + 后端服务）', '修复 render.yaml fromService property 配置'],
   },
   {
     version: '0.1',
