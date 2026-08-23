@@ -91,7 +91,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 const props = defineProps({ loggedIn: Boolean, version: String });
-const emit = defineEmits(['select']);
+const emit = defineEmits(['select', 'start']);
 
 const rootEl = ref(null);
 let ctx;
@@ -107,7 +107,7 @@ function randomOff(i) {
 }
 
 function onStart() {
-  emit('select', 'mood');
+  emit('start');
 }
 
 onMounted(() => {

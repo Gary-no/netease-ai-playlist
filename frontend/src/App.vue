@@ -6,6 +6,12 @@
         <span class="version-badge">v{{ APP_VERSION }}</span>
       </div>
       <div class="user-area">
+        <button class="changelog-btn" @click="showChangelog = true">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="12" height="11" rx="2" />
+            <path d="M5 7h6M5 10h4" />
+          </svg>
+        </button>
         <template v-if="profile">
           <div
             class="user-menu-wrap"
@@ -32,10 +38,10 @@
 
     <main class="app-main">
       <Transition name="view" mode="out-in">
-        <!-- 一级界面：分类入口 -->
-        <HomeView v-if="view === 'home'" key="home" :logged-in="!!profile" :version="APP_VERSION" @select="onSelectMode" />
+        <HomeView v-if="view === 'home'" key="home" :logged-in="!!profile" :version="APP_VERSION" @start="onStart" @select="onSelectMode" />
 
-        <!-- 二级界面：一键分类流程 -->
+        <SelectView v-else-if="view === 'select'" key="select" @select="onSelectMode" @back="view = 'home'" />
+
         <ClassifyFlow
           v-else-if="view === 'classify'"
           key="classify"
@@ -44,7 +50,6 @@
           @back="view = 'home'"
         />
 
-        <!-- 自定义分类：对话界面 -->
         <div v-else key="custom" class="custom-wrap">
           <div class="custom-header">
             <button class="back-btn" @click="view = 'home'">‹ 返回</button>
@@ -56,6 +61,24 @@
     </main>
 
     <LoginModal :visible="showLogin" @close="showLogin = false" @success="onLoginSuccess" />
+
+    <!-- 更新日志弹窗 -->
+    <div v-if="showChangelog" class="changelog-overlay" @click.self="showChangelog = false">
+      <div class="changelog-card anim-spring">
+        <div class="changelog-head">
+          <h3>更新日志</h3>
+          <button class="changelog-close" @click="showChangelog = false">✕</button>
+        </div>
+        <div class="changelog-body">
+          <div v-for="v in changelog" :key="v.version" class="cl-entry">
+            <span class="cl-version">{{ v.version }}</span>
+            <ul>
+              <li v-for="item in v.items" :key="item">{{ item }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -65,20 +88,44 @@ import { api, clearSessionId } from './api';
 import pkg from '../package.json';
 import LoginModal from './components/LoginModal.vue';
 import HomeView from './components/HomeView.vue';
+import SelectView from './components/SelectView.vue';
 import ClassifyFlow from './components/ClassifyFlow.vue';
 import ChatPanel from './components/ChatPanel.vue';
 
 const APP_VERSION = pkg.version;
 
-const view = ref('home'); // home | classify | custom
+const view = ref('home'); // home | select | classify | custom
 const classifyMode = ref('genre');
 const showLogin = ref(false);
+const showChangelog = ref(false);
 const profile = ref(null);
 const loggingOut = ref(false);
 const showMenu = ref(false);
 const theme = ref(localStorage.getItem('ncm_theme') || 'dark');
 
-// 明暗主题
+const changelog = [
+  {
+    version: '0.5',
+    items: ['HomeView 精简重构 — 移除分类入口，滑到底 CTA 开始', '逐字滚动动画，模仿 itsoffbrand 文字效果', '手机端适配'],
+  },
+  {
+    version: '0.4',
+    items: ['全面 itsoffbrand 灰度风格视觉改版', '暗色默认主题，亮色可切换', '19 处硬编码颜色替换为 CSS 变量'],
+  },
+  {
+    version: '0.3',
+    items: ['首屏信息架构重构 — 信任设计、Before/After 对比', '登录权限承诺与隐私说明'],
+  },
+  {
+    version: '0.2',
+    items: ['分类流程改为异步任务 + 真进度轮询', 'GitHub Actions 定时保活'],
+  },
+  {
+    version: '0.1',
+    items: ['网易云 AI 歌单助手初始版本', '扫码 + 手机验证码登录', '情绪 / 曲风 / 语种 / 热度四维分类', '自定义描述分类', '一键新建歌单'],
+  },
+];
+
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', theme.value);
 }
@@ -88,7 +135,6 @@ function toggleTheme() {
   applyTheme();
 }
 
-// 点击页面其他地方时关闭头像菜单
 function closeMenu() {
   showMenu.value = false;
 }
@@ -108,6 +154,10 @@ onUnmounted(() => {
   document.removeEventListener('click', closeMenu);
 });
 
+function onStart() {
+  view.value = 'select';
+}
+
 function onSelectMode(mode) {
   if (!profile.value) {
     showLogin.value = true;
@@ -124,7 +174,6 @@ function onSelectMode(mode) {
 async function onLoginSuccess(p) {
   showLogin.value = false;
   showMenu.value = false;
-  // 以 /me 为准二次确认登录态（防止扫码接口返回的 profile 不完整）
   try {
     const res = await api.me();
     if (res.loggedIn && res.profile) {
@@ -132,9 +181,8 @@ async function onLoginSuccess(p) {
       return;
     }
   } catch {
-    // 网络异常时忽略，走下方兜底
+    // 网络异常时忽略
   }
-  // 兜底：使用扫码接口返回的 profile
   if (p) profile.value = p;
 }
 
@@ -177,11 +225,6 @@ async function onLogout() {
   align-items: center;
   gap: 10px;
 }
-.brand h1 {
-  margin: 0;
-  font-size: 20px;
-  color: var(--text);
-}
 .brand-title {
   font-family: var(--font-display);
   font-weight: 700;
@@ -191,8 +234,8 @@ async function onLogout() {
 .version-badge {
   font-size: 11px;
   font-weight: 600;
-  color: #fff;
-  background: var(--accent);
+  color: #e5e4e0;
+  background: rgba(255,255,255,0.1);
   padding: 2px 8px;
   border-radius: 10px;
   line-height: 1.4;
@@ -202,6 +245,23 @@ async function onLogout() {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.changelog-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.changelog-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  color: var(--text-secondary);
 }
 .avatar {
   width: 32px;
@@ -219,7 +279,7 @@ async function onLogout() {
   border: none;
   border-radius: 980px;
   background: var(--accent);
-  color: #fff;
+  color: #1d1d1d;
   font-size: 14px;
   cursor: pointer;
   font-weight: 500;
@@ -298,7 +358,7 @@ async function onLogout() {
 }
 .menu-item.danger:hover {
   background: var(--danger);
-  color: #fff;
+  color: #1d1d1d;
 }
 .menu-item:disabled {
   opacity: 0.5;
@@ -326,10 +386,6 @@ async function onLogout() {
   font-size: 17px;
   color: var(--text);
 }
-.custom-hint {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
 .back-btn {
   padding: 6px 16px;
   border: none;
@@ -356,5 +412,81 @@ async function onLogout() {
 .view-leave-to {
   opacity: 0;
   transform: translateY(-10px) scale(0.99);
+}
+
+/* ============ 更新日志 ============ */
+.changelog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--modal-overlay);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.changelog-card {
+  width: 340px;
+  max-height: 70vh;
+  border-radius: 18px;
+  padding: 20px;
+  text-align: left;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+}
+.changelog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.changelog-head h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+}
+.changelog-close {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.changelog-close:hover {
+  background: var(--hover-bg);
+}
+.changelog-body {
+  overflow-y: auto;
+  flex: 1;
+}
+.cl-entry {
+  margin-bottom: 14px;
+}
+.cl-version {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 4px;
+}
+.cl-entry ul {
+  margin: 0;
+  padding-left: 16px;
+  list-style: disc;
+}
+.cl-entry li {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
 }
 </style>
