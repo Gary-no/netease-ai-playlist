@@ -228,6 +228,8 @@ async function onLogout() {
   align-items: center;
   justify-content: space-between;
   padding: 16px 0;
+  position: relative;
+  z-index: 10;
   animation: fade-in 0.5s var(--ease) both;
 }
 .brand {

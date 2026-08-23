@@ -29,93 +29,95 @@
           <h2 class="flow-title">{{ MODE_META[mode].title }}</h2>
         </div>
 
-        <!-- 分类模式：细项 chips -->
-        <div v-if="!isHot" class="options-block">
-          <div class="chips">
-            <span
-              class="chip auto-chip"
-              :class="{ active: autoMatch }"
-              @click="toggleAutoMatch"
-            >AI 自动匹配</span>
-            <span
-              v-for="(opt, i) in modeOptions"
-              :key="opt"
-              class="chip"
-              :class="{ active: !autoMatch && selectedOptions.has(opt) }"
-              :style="{ '--i': i }"
-              @click="toggleOption(opt)"
-            >{{ opt }}</span>
-          </div>
-        </div>
-
-        <!-- 热度模式：评论 / 点赞阈值滑块 -->
-        <div v-else class="filter-block glass">
-          <div class="filter-row">
-            <span class="filter-label">评论 ≥</span>
-            <input
-              type="range"
-              min="0"
-              max="1000"
-              step="1"
-              :value="commentPos"
-              class="slider"
-              @input="onCommentPos(Number($event.target.value))"
-            />
-            <input
-              type="number"
-              min="0"
-              max="10000"
-              :value="commentTotal"
-              class="number-input"
-              @input="onCommentValue(Number($event.target.value))"
-            />
-          </div>
-          <div class="filter-row">
-            <span class="filter-label">点赞 ≥</span>
-            <input
-              type="range"
-              min="0"
-              max="1000"
-              step="1"
-              :value="likedPos"
-              class="slider"
-              @input="onLikedPos(Number($event.target.value))"
-            />
-            <input
-              type="number"
-              min="0"
-              max="10000"
-              :value="likedCount"
-              class="number-input"
-              @input="onLikedValue(Number($event.target.value))"
-            />
-          </div>
-        </div>
-
-        <p v-if="loading" class="empty">加载中</p>
-        <p v-else-if="!playlists.length" class="empty">暂无歌单</p>
-        <ul class="pl-list" v-else>
-          <li
-            v-for="(p, i) in playlists"
-            :key="p.id"
-            class="pl-item anim-stagger"
-            :style="{ '--i': i }"
-            @click="toggleSelect(p.id)"
-          >
-            <span
-              class="dot"
-              :class="{ checked: selected.has(p.id) }"
-              @click.stop="toggleSelect(p.id)"
-            ></span>
-            <img v-if="p.coverImgUrl" :src="p.coverImgUrl" class="pl-cover" alt="" />
-            <div v-else class="pl-cover placeholder">♪</div>
-            <div class="pl-info">
-              <div class="pl-name">{{ p.name }}</div>
-              <div class="pl-count">{{ p.trackCount }} 首</div>
+        <div class="pick-content">
+          <!-- 分类模式：细项 chips -->
+          <div v-if="!isHot" class="options-block">
+            <div class="chips">
+              <span
+                class="chip auto-chip"
+                :class="{ active: autoMatch }"
+                @click="toggleAutoMatch"
+              >AI 自动匹配</span>
+              <span
+                v-for="(opt, i) in modeOptions"
+                :key="opt"
+                class="chip"
+                :class="{ active: !autoMatch && selectedOptions.has(opt) }"
+                :style="{ '--i': i }"
+                @click="toggleOption(opt)"
+              >{{ opt }}</span>
             </div>
-            <button class="view-arrow" @click.stop="openDetail(p)">›</button>
-          </li>
-        </ul>
+          </div>
+
+          <!-- 热度模式：评论 / 点赞阈值滑块 -->
+          <div v-else class="filter-block glass">
+            <div class="filter-row">
+              <span class="filter-label">评论 ≥</span>
+              <input
+                type="range"
+                min="0"
+                max="1000"
+                step="1"
+                :value="commentPos"
+                class="slider"
+                @input="onCommentPos(Number($event.target.value))"
+              />
+              <input
+                type="number"
+                min="0"
+                max="10000"
+                :value="commentTotal"
+                class="number-input"
+                @input="onCommentValue(Number($event.target.value))"
+              />
+            </div>
+            <div class="filter-row">
+              <span class="filter-label">点赞 ≥</span>
+              <input
+                type="range"
+                min="0"
+                max="1000"
+                step="1"
+                :value="likedPos"
+                class="slider"
+                @input="onLikedPos(Number($event.target.value))"
+              />
+              <input
+                type="number"
+                min="0"
+                max="10000"
+                :value="likedCount"
+                class="number-input"
+                @input="onLikedValue(Number($event.target.value))"
+              />
+            </div>
+          </div>
+
+          <p v-if="loading" class="empty">加载中</p>
+          <p v-else-if="!playlists.length" class="empty">暂无歌单</p>
+          <ul class="pl-list" v-else>
+            <li
+              v-for="(p, i) in playlists"
+              :key="p.id"
+              class="pl-item anim-stagger"
+              :style="{ '--i': i }"
+              @click="toggleSelect(p.id)"
+            >
+              <span
+                class="dot"
+                :class="{ checked: selected.has(p.id) }"
+                @click.stop="toggleSelect(p.id)"
+              ></span>
+              <img v-if="p.coverImgUrl" :src="p.coverImgUrl" class="pl-cover" alt="" />
+              <div v-else class="pl-cover placeholder">♪</div>
+              <div class="pl-info">
+                <div class="pl-name">{{ p.name }}</div>
+                <div class="pl-count">{{ p.trackCount }} 首</div>
+              </div>
+              <button class="view-arrow" @click.stop="openDetail(p)">›</button>
+            </li>
+          </ul>
+        </div>
 
         <div class="flow-actions">
           <button
@@ -472,6 +474,13 @@ function fmtDuration(sec) {
   gap: 12px;
   margin-bottom: 24px;
   flex-shrink: 0;
+}
+.pick-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 .flow-title {
   margin: 0;
