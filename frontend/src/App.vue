@@ -26,7 +26,7 @@
             </div>
           </div>
         </template>
-        <button v-else class="login-btn" @click="showLogin = true">扫码登录</button>
+        <button v-else class="login-btn" @click="showLogin = true">登录</button>
       </div>
     </header>
 

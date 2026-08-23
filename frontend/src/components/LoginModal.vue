@@ -52,6 +52,9 @@
             {{ phoneLogging ? '登录中...' : '登录' }}
           </button>
           <p v-if="phoneError" class="status error">{{ phoneError }}</p>
+          <div class="actions">
+            <button @click="$emit('close')">关闭</button>
+          </div>
         </div>
       </template>
     </div>
