@@ -19,19 +19,19 @@
 
     <!-- ============ 段落 ============ -->
     <section class="section">
-      <p class="section-text mask-reveal">
+      <p class="section-text baseline-reveal">
         连接网易云账号，AI 按情绪、曲风、语种或热度分类整理。不删不改。
       </p>
-      <div v-if="!loggedIn" class="trust-row mask-reveal">
+      <div v-if="!loggedIn" class="trust-row baseline-reveal">
         <span>仅读歌单 · 不改不删 · 随时撤销</span>
       </div>
-      <p v-else class="trusted-text mask-reveal">已连接</p>
+      <p v-else class="trusted-text baseline-reveal">已连接</p>
     </section>
 
     <!-- ============ 整理前后 ============ -->
     <section class="section">
-      <h2 class="section-title mask-reveal">整理前后</h2>
-      <div class="ba-wrap mask-reveal">
+      <h2 class="section-title baseline-reveal">整理前后</h2>
+      <div class="ba-wrap baseline-reveal">
         <div class="ba-col">
           <p class="ba-label">之前</p>
           <div class="ba-item">我喜欢的音乐 482 首</div>
@@ -50,8 +50,8 @@
 
     <!-- ============ 玩法 ============ -->
     <section class="section">
-      <h2 class="section-title mask-reveal">三步完成</h2>
-      <div class="steps mask-reveal">
+      <h2 class="section-title baseline-reveal">三步完成</h2>
+      <div class="steps baseline-reveal">
         <div class="step">
           <span class="step-num">01</span>
           <strong>登录</strong>
@@ -69,12 +69,12 @@
 
     <!-- ============ CTA ============ -->
     <section class="section cta-section" @click="onStart">
-      <h2 class="cta-title mask-reveal">现在开始</h2>
-      <div class="cta-arrow mask-reveal">→</div>
+      <h2 class="cta-title baseline-reveal">现在开始</h2>
+      <div class="cta-arrow baseline-reveal">→</div>
     </section>
 
     <!-- ============ Footer ============ -->
-    <footer class="footer mask-reveal">
+    <footer class="footer baseline-reveal">
       免费 · v{{ version }}
     </footer>
   </div>
@@ -105,14 +105,15 @@ onMounted(() => {
     gsap.from('.hero-title', { y: 32, opacity: 0, duration: 0.6, ease: 'power2.out', delay: 0.2 });
     gsap.from('.hero-sub', { y: 16, opacity: 0, duration: 0.5, ease: 'power2.out', delay: 0.4 });
 
-    // === Mask Reveal：从一条细线展开 ===
-    gsap.utils.toArray('.mask-reveal').forEach((el) => {
+    // === Baseline Reveal：遮罩从基线收缩，文字从基线向外生长 ===
+    gsap.utils.toArray('.baseline-reveal').forEach((el) => {
       gsap.fromTo(el,
-        { clipPath: 'inset(50% 0 50% 0)' },
+        { '--mask-scale': 1, '--line-opacity': 1 },
         {
-          clipPath: 'inset(0 0 0 0)',
-          duration: 0.75,
-          ease: 'power3.out',
+          '--mask-scale': 0,
+          '--line-opacity': 0,
+          duration: 0.7,
+          ease: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
           scrollTrigger: { trigger: el, scroller: root, start: 'top 88%' },
         }
       );
@@ -132,10 +133,46 @@ onUnmounted(() => ctx && ctx.revert());
   text-align: center;
   background: var(--bg);
 }
-.mask-reveal {
-  clip-path: inset(50% 0 50% 0);
-  will-change: clip-path;
+
+/* ============ Baseline Reveal ============ */
+/* 
+  原理：::after 遮罩层覆盖文字，初始 scaleY(1) 完全遮盖，
+  动画时从基线位置 (top:72%) 收缩到 scaleY(0)，
+  文字从基线处向上向下同步露出 —— 看起来就像从一条线生长出来
+*/
+.baseline-reveal {
+  position: relative;
+  --mask-scale: 1;
+  --line-opacity: 1;
 }
+
+/* 基线线条 */
+.baseline-reveal::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 72%;
+  height: 1px;
+  background: var(--text-muted);
+  opacity: var(--line-opacity);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 遮罩覆盖层 */
+.baseline-reveal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  transform-origin: 50% 72%;
+  transform: scaleY(var(--mask-scale));
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform;
+}
+
 .hero {
   min-height: 100vh;
   display: flex;
