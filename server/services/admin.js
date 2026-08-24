@@ -44,10 +44,13 @@ function load() {
 // 所有写操作都走锁，防止并发写损坏 JSON
 export async function trackLogin(phone, userId) {
   const data = load();
-  if (phone && !data.totalUsers.includes(phone)) data.totalUsers.push(phone);
+  // 扫码登录拿不到手机号时，用 uid 兜底，保证用户不漏计
+  const key = phone || (userId ? `uid:${userId}` : '');
+  if (!key) return;
+  if (!data.totalUsers.includes(key)) data.totalUsers.push(key);
   const d = today();
   if (!data.dailyActive[d]) data.dailyActive[d] = [];
-  if (phone && !data.dailyActive[d].includes(phone)) data.dailyActive[d].push(phone);
+  if (!data.dailyActive[d].includes(key)) data.dailyActive[d].push(key);
   await lockedWrite(data);
 }
 

@@ -40,6 +40,18 @@
         </div>
       </div>
 
+      <h3 class="dash-section-title">当前在线用户（{{ onlineUsers.length }}）</h3>
+      <div v-if="!onlineUsers.length" class="dash-empty">暂无在线用户</div>
+      <div v-else class="error-list">
+        <div v-for="(u, i) in onlineUsers" :key="u.sessionId || i" class="online-user-item">
+          <img v-if="u.avatarUrl" :src="u.avatarUrl" class="online-avatar" alt="" />
+          <span class="online-nickname">{{ u.nickname }}</span>
+          <span v-if="u.phone" class="online-phone">{{ u.phone }}</span>
+          <span v-else-if="u.userId" class="online-phone">uid: {{ u.userId }}</span>
+          <span class="online-time">{{ fmtTime(u.updatedAt) }}</span>
+        </div>
+      </div>
+
       <h3 class="dash-section-title">分类维度统计</h3>
       <div class="classify-bars">
         <div v-for="(v, k) in stats.classifyStats" :key="k" class="bar-row">
@@ -105,6 +117,7 @@ const token = ref(localStorage.getItem('admin_token') || '');
 const err = ref('');
 const verifying = ref(false);
 const stats = ref(null);
+const onlineUsers = ref([]);
 
 const labels = { mood: '情绪', genre: '曲风', language: '语种', hot: '热度', custom: '自定义' };
 const replyTexts = ref({});
@@ -126,6 +139,14 @@ async function loadStats() {
   }
 }
 
+async function loadOnlineUsers() {
+  try {
+    onlineUsers.value = await api.getOnlineUsers(token.value);
+  } catch {
+    onlineUsers.value = [];
+  }
+}
+
 async function onVerify() {
   err.value = '';
   verifying.value = true;
@@ -134,7 +155,7 @@ async function onVerify() {
     if (res.success) {
       token.value = res.token;
       localStorage.setItem('admin_token', res.token);
-      await loadStats();
+      await Promise.all([loadStats(), loadOnlineUsers()]);
     } else {
       err.value = res.error || '密码错误';
     }
@@ -168,6 +189,7 @@ onMounted(async () => {
   if (token.value) {
     try {
       await loadStats();
+      await loadOnlineUsers();
     } catch {
       token.value = '';
       localStorage.removeItem('admin_token');
@@ -454,6 +476,40 @@ onMounted(async () => {
 }
 .fb-reply-btn:disabled {
   opacity: 0.4;
+}
+.online-user-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.online-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--hover-bg);
+}
+.online-nickname {
+  font-weight: 600;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.online-phone {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.online-time {
+  color: var(--text-muted);
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
 }
 .rating-comment {
   margin-top: 4px;

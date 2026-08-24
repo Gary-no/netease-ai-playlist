@@ -160,6 +160,10 @@ const theme = ref(localStorage.getItem('ncm_theme') || 'dark');
 
 const changelog = [
   {
+    version: '0.7.2',
+    items: ['修复扫码登录用户漏计（每日用户数/活跃数不完整）', '后台新增"当前在线用户"列表，可查看昵称/手机号/活跃时间'],
+  },
+  {
     version: '0.7.1',
     items: ['修复后台管理打开后无响应：兼容旧版 admin.json 缺字段'],
   },

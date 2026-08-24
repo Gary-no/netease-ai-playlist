@@ -92,6 +92,23 @@ class CookieStore {
     delete this.data[sessionId];
     this._persist();
   }
+
+  // 列出所有已登录 session 的用户信息（不暴露 cookie 明文），供后台"在线用户"查看
+  listUsers() {
+    return Object.entries(this.data)
+      .map(([sessionId, rec]) => {
+        const p = rec.profile || {};
+        return {
+          sessionId,
+          nickname: p.nickname || '未知用户',
+          userId: p.userId ?? null,
+          phone: p.phone ?? null,
+          avatarUrl: p.avatarUrl || '',
+          updatedAt: rec.updatedAt || 0,
+        };
+      })
+      .sort((a, b) => b.updatedAt - a.updatedAt);
+  }
 }
 
 export const cookieStore = new CookieStore();

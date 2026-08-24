@@ -123,6 +123,12 @@ export const api = {
     });
     return data;
   },
+  async getOnlineUsers(token) {
+    const { data } = await http.get('/admin/online-users', {
+      headers: { 'X-Admin-Token': token },
+    });
+    return data.users || [];
+  },
   async submitFeedback(content) {
     const { data } = await http.post('/admin/feedback', { content });
     return data;

@@ -29,6 +29,13 @@ router.get('/stats', (req, res) => {
   res.json(getStats());
 });
 
+// 获取当前在线用户列表（需密码 verified）
+router.get('/online-users', (req, res) => {
+  const token = req.headers['x-admin-token'];
+  if (!token || !token.startsWith('admin-')) return res.status(403).json({ error: '无权限，请先验证密码' });
+  res.json({ users: cookieStore.listUsers() });
+});
+
 // 用户提交反馈（需登录）
 router.post('/feedback', async (req, res) => {
   const record = getRecord(req);

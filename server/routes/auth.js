@@ -52,6 +52,8 @@ router.get('/qr/check', async (req, res) => {
           userId: statusData.account?.id ?? statusData.profile?.userId,
           nickname: statusData.profile?.nickname || '网易云用户',
           avatarUrl: statusData.profile?.avatarUrl || '',
+          // 扫码登录若接口返回手机号则保留（用于管理员统计），没有则靠 userId 兜底
+          phone: statusData.profile?.phone ? String(statusData.profile.phone) : undefined,
         };
       } catch (err) {
         // 登录态查询失败不阻断登录：cookie 照常保存，前端会收到 803
