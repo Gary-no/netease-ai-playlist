@@ -15,8 +15,6 @@ async function lockedWrite(data) {
   await writeQueue;
 }
 
-const ADMIN_PHONE = '13310843113';
-
 // 默认数据结构
 const DEFAULT = {
   totalUsers: [],
@@ -119,9 +117,7 @@ export function getStats() {
   };
 }
 
-// 判断是否为管理员账号（手机号 13310843113）
+// 判断是否为管理员账号（手机号 13310843113 或昵称 lbz老班长-）
 export function isAdminProfile(profile) {
-  const phone = profile?.phone;
-  const userId = profile?.userId;
-  return phone === ADMIN_PHONE || userId === 13310843113;
+  return profile?.phone === '13310843113' || profile?.nickname === 'lbz老班长-';
 }

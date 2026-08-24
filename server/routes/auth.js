@@ -136,6 +136,7 @@ router.post('/cellphone', async (req, res) => {
       userId: data.account?.id ?? data.profile?.userId,
       nickname: data.profile?.nickname || '网易云用户',
       avatarUrl: data.profile?.avatarUrl || '',
+      phone: String(phone), // 记录手机号，用于管理员识别
     };
     cookieStore.set(sessionId, data.cookie, profile);
     const encryptedCookie = cookieStore.rawEncrypt(data.cookie);

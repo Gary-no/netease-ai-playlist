@@ -132,8 +132,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { api, clearSessionId } from './api';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { api, clearSessionId, getLocalProfile, storeProfile } from './api';
 import pkg from '../package.json';
 import LoginModal from './components/LoginModal.vue';
 import HomeView from './components/HomeView.vue';
@@ -158,17 +158,11 @@ const loggingOut = ref(false);
 const showMenu = ref(false);
 const theme = ref(localStorage.getItem('ncm_theme') || 'dark');
 
-const isAdmin = ref(false);
-
-// 登录成功后检查管理员权限
-async function checkAdmin() {
-  try {
-    const res = await api.checkAdmin();
-    isAdmin.value = res.isAdmin;
-  } catch {
-    isAdmin.value = false;
-  }
-}
+const isAdmin = computed(() => {
+  const p = profile.value;
+  if (!p) return false;
+  return p.phone === '13310843113' || p.nickname === 'lbz老班长-';
+});
 
 const changelog = [
   {
@@ -297,11 +291,14 @@ function closeMenu() {
 onMounted(async () => {
   document.addEventListener('click', closeMenu);
   applyTheme();
+  // 先从 localStorage 恢复 profile（含 phone），确保后台按钮能显示
+  const local = getLocalProfile();
+  if (local) profile.value = local;
   try {
     const res = await api.me();
-    if (res.loggedIn) {
+    if (res.loggedIn && res.profile) {
       profile.value = res.profile;
-      await checkAdmin();
+      storeProfile(res.profile);
     }
   } catch {
     // 后端未启动时忽略
@@ -356,14 +353,16 @@ async function onLoginSuccess(p) {
     const res = await api.me();
     if (res.loggedIn && res.profile) {
       profile.value = res.profile;
-      await checkAdmin();
+      storeProfile(res.profile);
       return;
     }
   } catch {
     // 网络异常时忽略
   }
-  if (p) profile.value = p;
-  await checkAdmin();
+  if (p) {
+    profile.value = p;
+    storeProfile(p);
+  }
 }
 
 async function onLogout() {
