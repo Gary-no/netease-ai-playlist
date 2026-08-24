@@ -7,12 +7,15 @@ const DATA_DIR = join(__dirname, '..', 'data');
 const FILE = join(DATA_DIR, 'admin.json');
 
 // 简单的文件写入锁（单实例足够，多实例需换 Redis）
+// 注意：单次写入失败不能污染整条队列，否则后续所有写入会永久静默失败
 let writeQueue = Promise.resolve();
 async function lockedWrite(data) {
-  writeQueue = writeQueue.then(() => {
+  const task = writeQueue.then(() => {
     writeFileSync(FILE, JSON.stringify(data, null, 2));
   });
-  await writeQueue;
+  // 队列本身吞掉错误，保证下一条任务能正常执行；本次错误由调用方 await 捕获
+  writeQueue = task.catch(() => {});
+  await task;
 }
 
 // 判断是否为管理员账号
@@ -72,6 +75,10 @@ export async function trackError(phone, method, url, message) {
 let fbId = 0;
 export async function trackFeedback(nickname, content) {
   const data = load();
+  // 从已有反馈的最大 id 继续，避免后端重启后 id 重复导致管理员回复错乱
+  if (fbId === 0) {
+    for (const f of data.feedbacks) if (f.id > fbId) fbId = f.id;
+  }
   fbId++;
   data.feedbacks.unshift({ id: fbId, time: new Date().toISOString(), nickname, content, reply: null });
   if (data.feedbacks.length > 200) data.feedbacks = data.feedbacks.slice(0, 200);

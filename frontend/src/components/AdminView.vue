@@ -384,6 +384,20 @@ onMounted(async () => {
   flex-direction: column;
   gap: 6px;
   margin-bottom: 28px;
+  /* 每个区块内部独立滚动，避免整个页面滚得太长找不到顶部内容 */
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.error-list::-webkit-scrollbar {
+  width: 6px;
+}
+.error-list::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+.error-list::-webkit-scrollbar-track {
+  background: transparent;
 }
 .error-item {
   display: flex;
@@ -525,5 +539,6 @@ onMounted(async () => {
 }
 @media (max-width: 480px) {
   .dash-grid { grid-template-columns: repeat(2, 1fr); }
+  .error-list { max-height: 260px; }
 }
 </style>
