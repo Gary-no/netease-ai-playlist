@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { neteaseApi } from '../services/netease.js';
 import { cookieStore } from '../services/cookieStore.js';
+import { isAdminProfile } from '../services/admin.js';
 
 const router = Router();
 
@@ -71,11 +72,12 @@ router.get('/qr/check', async (req, res) => {
 
 // ---------- 登录态 ----------
 
-// 查询当前 session 的登录状态
+// 查询当前 session 的登录状态（含管理员身份）
 router.get('/me', (req, res) => {
   const sessionId = req.headers['x-session-id'];
   const record = sessionId && cookieStore.get(sessionId);
-  res.json({ loggedIn: !!record, profile: record?.profile || null });
+  const profile = record?.profile || null;
+  res.json({ loggedIn: !!record, profile, isAdmin: isAdminProfile(profile) });
 });
 
 // 发送手机验证码
