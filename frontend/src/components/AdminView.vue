@@ -92,6 +92,7 @@
           <span class="error-method">{{ r.score }}</span>
           <span class="error-url">{{ r.mode }}</span>
           <span class="error-msg">{{ (r.categories || []).join(', ') }}</span>
+          <span v-if="r.comment" class="rating-comment">{{ r.comment }}</span>
         </div>
       </div>
     </div>
@@ -470,6 +471,14 @@ onMounted(() => {
 .admin-loading {
   font-size: 14px;
   color: var(--text-muted);
+}
+.rating-comment {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  flex: 1;
+  min-width: 100px;
 }
 
 @media (max-width: 480px) {

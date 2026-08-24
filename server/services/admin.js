@@ -108,9 +108,9 @@ export function getUserFeedbacks(nickname) {
 }
 
 // 记录歌单评价
-export function trackRating(nickname, mode, categories, score) {
+export function trackRating(nickname, mode, categories, score, comment) {
   const data = load();
-  data.ratings.unshift({ time: new Date().toISOString(), nickname, mode, categories, score });
+  data.ratings.unshift({ time: new Date().toISOString(), nickname, mode, categories, score, comment: comment || '' });
   if (data.ratings.length > 500) data.ratings = data.ratings.slice(0, 500);
   save(data);
 }

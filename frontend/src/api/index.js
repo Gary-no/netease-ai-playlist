@@ -147,8 +147,8 @@ export const api = {
   },
 
   // ===== 歌单评价 =====
-  async submitRating(mode, categories, score) {
-    const { data } = await http.post('/admin/rate', { mode, categories, score });
+  async submitRating(mode, categories, score, comment) {
+    const { data } = await http.post('/admin/rate', { mode, categories, score, comment });
     return data;
   },
 };

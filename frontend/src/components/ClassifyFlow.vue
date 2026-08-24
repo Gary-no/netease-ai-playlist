@@ -214,10 +214,17 @@
         <div class="rating" v-if="!rated">
           <p class="rating-label">这个分类结果怎么样？</p>
           <div class="rating-btns">
-            <button class="rate-btn" :class="{ active: ratingScore === 'good' }" @click="onRate('good')">👍 满意</button>
-            <button class="rate-btn" :class="{ active: ratingScore === 'ok' }" @click="onRate('ok')">🤔 一般</button>
-            <button class="rate-btn" :class="{ active: ratingScore === 'bad' }" @click="onRate('bad')">👎 不满意</button>
+            <button class="rate-btn" :class="{ active: ratingScore === 'good' }" @click="ratingScore = 'good'">👍 满意</button>
+            <button class="rate-btn" :class="{ active: ratingScore === 'ok' }" @click="ratingScore = 'ok'">🤔 一般</button>
+            <button class="rate-btn" :class="{ active: ratingScore === 'bad' }" @click="ratingScore = 'bad'">👎 不满意</button>
           </div>
+          <textarea
+            v-model="ratingComment"
+            class="rating-input"
+            rows="2"
+            placeholder="补充评价（可选）"
+          ></textarea>
+          <button class="rate-submit" :disabled="!ratingScore" @click="onRate">提交评价</button>
           <p v-if="ratingDone" class="rating-thanks">感谢评价</p>
         </div>
       </div>
@@ -267,6 +274,7 @@ const generating = ref([]); // 每类是否生成中
 const showDone = ref(false); // 生成完成弹窗
 const doneInfo = ref(null); // 完成的歌单信息 { name, playlistId, count }
 const ratingScore = ref('');
+const ratingComment = ref('');
 const ratingDone = ref(false);
 const rated = ref(false);
 const error = ref('');
@@ -476,11 +484,12 @@ function openNetease() {
   showDone.value = false;
 }
 
-function onRate(score) {
-  ratingScore.value = score;
+function onRate() {
+  const score = ratingScore.value;
+  if (!score) return;
   rated.value = true;
   ratingDone.value = true;
-  api.submitRating(props.mode, catNames.value || [], score).catch(() => {});
+  api.submitRating(props.mode, catNames.value || [], score, ratingComment.value).catch(() => {});
 }
 
 function fmtDuration(sec) {
@@ -1101,6 +1110,38 @@ function fmtDuration(sec) {
   margin: 8px 0 0;
   font-size: 12px;
   color: var(--text-muted);
+}
+.rating-input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--font);
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+.rating-input:focus {
+  border-color: var(--border-strong);
+}
+.rate-submit {
+  margin-top: 10px;
+  padding: 7px 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #1d1d1d;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.rate-submit:disabled {
+  opacity: 0.4;
 }
 .done-actions button.primary {
   border: none;

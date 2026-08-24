@@ -83,10 +83,10 @@ router.post('/feedback-reply', (req, res) => {
 router.post('/rate', (req, res) => {
   const record = getRecord(req);
   if (!record) return res.status(401).json({ error: '请先登录' });
-  const { mode, categories, score } = req.body || {};
+  const { mode, categories, score, comment } = req.body || {};
   if (!score) return res.status(400).json({ error: '请选择评价' });
   const nickname = record.profile?.nickname || '未知用户';
-  trackRating(nickname, mode || '', categories || [], score);
+  trackRating(nickname, mode || '', categories || [], score, comment || '');
   res.json({ success: true });
 });
 
