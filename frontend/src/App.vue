@@ -160,6 +160,10 @@ const theme = ref(localStorage.getItem('ncm_theme') || 'dark');
 
 const changelog = [
   {
+    version: '0.7.1',
+    items: ['修复后台管理打开后无响应：兼容旧版 admin.json 缺字段'],
+  },
+  {
     version: '0.7',
     items: ['正式上线安全加固：CORS 锁域、请求体限制、数据文件锁', '分类每日上限 3 次', '登录态本地持久化，部署后自动恢复', '网易云接口超时提升 + 自动重试'],
   },

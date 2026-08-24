@@ -34,7 +34,10 @@ function load() {
     writeFileSync(FILE, JSON.stringify(DEFAULT, null, 2));
     return { ...DEFAULT };
   }
-  try { return JSON.parse(readFileSync(FILE, 'utf-8')); }
+  try {
+    // 与 DEFAULT 合并，兼容旧结构缺字段（如 feedbacks/ratings）导致 getStats 崩溃
+    return { ...DEFAULT, ...JSON.parse(readFileSync(FILE, 'utf-8')) };
+  }
   catch { return { ...DEFAULT }; }
 }
 
