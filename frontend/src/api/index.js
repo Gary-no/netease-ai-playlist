@@ -3,7 +3,10 @@ import axios from 'axios';
 // 会话 ID：用于后端关联网易云 Cookie。前端本地持久化，同一浏览器保持同一身份
 const SESSION_KEY = 'ncm_ai_session_id';
 const COOKIE_KEY = 'ncm_encrypted_cookie';
+<<<<<<< HEAD
 const PROFILE_KEY = 'ncm_profile';
+=======
+>>>>>>> 147a70e (feat: 正式上线安全加固 + 0.7)
 
 export function getSessionId() {
   let sid = localStorage.getItem(SESSION_KEY);
@@ -18,12 +21,16 @@ export function getSessionId() {
 export function clearSessionId() {
   localStorage.removeItem(SESSION_KEY);
   localStorage.removeItem(COOKIE_KEY);
+<<<<<<< HEAD
   localStorage.removeItem(PROFILE_KEY);
+=======
+>>>>>>> 147a70e (feat: 正式上线安全加固 + 0.7)
 }
 
 // 存储加密的网易云 Cookie（登陆后由后端返回）
 export function storeNcmCookie(encrypted) {
   if (encrypted) localStorage.setItem(COOKIE_KEY, encrypted);
+<<<<<<< HEAD
 }
 
 // 存储用户 profile（含 phone），用于部署后恢复管理员身份
@@ -36,6 +43,8 @@ export function getLocalProfile() {
   try {
     return JSON.parse(localStorage.getItem(PROFILE_KEY));
   } catch { return null; }
+=======
+>>>>>>> 147a70e (feat: 正式上线安全加固 + 0.7)
 }
 
 // API 基础地址：本地开发用 /api（走 Vite proxy），生产部署用 VITE_API_BASE 指向后端域名

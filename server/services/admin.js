@@ -14,6 +14,11 @@ async function lockedWrite(data) {
   });
   await writeQueue;
 }
+<<<<<<< HEAD
+=======
+
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '1234abcdGary';
+>>>>>>> 147a70e (feat: 正式上线安全加固 + 0.7)
 
 // 默认数据结构
 const DEFAULT = {
@@ -117,7 +122,12 @@ export function getStats() {
   };
 }
 
+<<<<<<< HEAD
 // 判断是否为管理员账号（手机号 13310843113 或昵称 lbz老班长-）
 export function isAdminProfile(profile) {
   return profile?.phone === '13310843113' || profile?.nickname === 'lbz老班长-';
+=======
+export function verifyPassword(password) {
+  return password === ADMIN_PASSWORD;
+>>>>>>> 147a70e (feat: 正式上线安全加固 + 0.7)
 }
