@@ -7,12 +7,12 @@ if (config.mock) {
   console.log('⚡ 演示模式已开启（MOCK=true），使用模拟数据');
 }
 
-// 指数退避重试（429/502 冷启动/限流时自动重试）
+// 指数退避重试（429/502/冷启动时自动重试）
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 async function withRetry(fn, options = {}) {
-  const { retries = 3, baseDelay = 1000 } = options;
+  const { retries = 4, baseDelay = 3000 } = options;
   for (let i = 0; i <= retries; i++) {
     try {
       return await fn();
@@ -20,7 +20,7 @@ async function withRetry(fn, options = {}) {
       const status = err?.response?.status;
       const isRetryable = status === 429 || status === 502 || status === 503 || !status;
       if (i === retries || !isRetryable) throw err;
-      const delay = baseDelay * Math.pow(2, i) + Math.random() * 500;
+      const delay = baseDelay * Math.pow(2, i) + Math.random() * 1000;
       console.log(`[netease] 请求失败(${status || 'timeout'})，${Math.round(delay)}ms 后重试(${i + 1}/${retries})`);
       await sleep(delay);
     }
@@ -31,7 +31,7 @@ async function withRetry(fn, options = {}) {
 // 所有需要登录态的请求都会把用户 Cookie 放进请求头，代表用户操作
 const http = axios.create({
   baseURL: config.neteaseApiBase,
-  timeout: 35000, // 35s：给 Render 冷启动和网易云限流留足时间
+  timeout: 45000, // 45s：给 Render 冷启动留足时间（免费版冷启动约 20-30s）
 });
 
 // 网易云接口要求带 timestamp 防缓存

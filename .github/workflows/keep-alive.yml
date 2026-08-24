@@ -2,32 +2,31 @@ name: Keep Render Services Alive
 
 on:
   schedule:
-    # 每 5 分钟 ping 一次，留足余量对抗 GitHub Actions 调度延迟
+    # 每 5 分钟 ping 一次
     - cron: '*/5 * * * *'
-  workflow_dispatch: # 支持手动触发
+  workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping 后端服务 + 网易云 API
+      - name: Ping 所有服务（含二维码链路预热）
         run: |
           FAIL=0
-          
           echo "=== Ping ai-playlist-server ==="
           curl -s -o /dev/null -w "HTTP %{http_code} time=%{time_total}s\n" \
-            --max-time 35 https://api.playlist-helper.com/health || { echo "❌ 后端 ping 失败"; FAIL=1; }
+            --max-time 45 https://api.playlist-helper.com/health || { echo "后端 ping 失败"; FAIL=1; }
           
           echo "=== Ping 网易云 API 服务 ==="
           curl -s -o /dev/null -w "HTTP %{http_code} time=%{time_total}s\n" \
-            --max-time 35 https://netease-api-x8t6.onrender.com/ || { echo "❌ API ping 失败"; FAIL=1; }
+            --max-time 45 https://netease-api-x8t6.onrender.com/ || { echo "API ping 失败"; FAIL=1; }
           
           echo "=== Warm up 二维码链路 ==="
           curl -s -o /dev/null -w "HTTP %{http_code} time=%{time_total}s\n" \
-            --max-time 35 https://api.playlist-helper.com/api/auth/qr/key || { echo "❌ QR 链路 warmup 失败"; FAIL=1; }
+            --max-time 45 https://api.playlist-helper.com/api/auth/qr/key || { echo "QR 链路 warmup 失败"; FAIL=1; }
           
           if [ "$FAIL" = "1" ]; then
-            echo "⚠️ 部分服务未响应，下次重试"
+            echo "⚠️ 部分服务未响应，将在下次重试"
           else
             echo "✅ 全部服务在线"
           fi

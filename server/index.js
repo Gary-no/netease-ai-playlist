@@ -8,6 +8,7 @@ import classifyRoutes from './routes/classify.js';
 import adminRoutes from './routes/admin.js';
 import { trackLogin, trackClassify, trackError } from './services/admin.js';
 import { cookieStore } from './services/cookieStore.js';
+import { neteaseApi } from './services/netease.js';
 
 const app = express();
 
@@ -87,4 +88,15 @@ app.listen(config.port, () => {
   console.log(`   对接网易云 API: ${config.neteaseApiBase}`);
   console.log(`   LLM 模型: ${config.llm.model}`);
   console.log(`   CORS 域: ${config.corsOrigin}`);
+
+  // 启动时预热网易云 API（防止冷启动导致首次请求 502）
+  (async () => {
+    try {
+      console.log('[warmup] 正在预热网易云 API…');
+      await neteaseApi.getQrKey();
+      console.log('[warmup] 网易云 API 预热完成 ✓');
+    } catch (e) {
+      console.log(`[warmup] 预热跳过: ${e.message}`);
+    }
+  })();
 });
