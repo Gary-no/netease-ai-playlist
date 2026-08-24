@@ -38,7 +38,7 @@
             <span class="nickname">{{ profile.nickname }}</span>
             <span class="caret" :class="{ hidden: view !== 'home' }">▾</span>
             <div v-if="showMenu && view === 'home'" class="user-menu anim-pop">
-              <button v-if="isAdmin" class="menu-item" @click="onAdmin">后台管理</button>
+              <button class="menu-item" @click="onAdmin">后台管理</button>
               <button class="menu-item danger" @click="onLogout" :disabled="loggingOut">
                 {{ loggingOut ? '退出中...' : '退出账号' }}
               </button>
@@ -157,7 +157,6 @@ const profile = ref(null);
 const loggingOut = ref(false);
 const showMenu = ref(false);
 const theme = ref(localStorage.getItem('ncm_theme') || 'dark');
-const isAdmin = ref(false);
 
 const changelog = [
   {
@@ -295,7 +294,6 @@ onMounted(async () => {
       profile.value = res.profile;
       storeProfile(res.profile);
     }
-    isAdmin.value = res.isAdmin || false;
   } catch {
     // 后端未启动时忽略
   }
@@ -350,7 +348,6 @@ async function onLoginSuccess(p) {
     if (res.loggedIn && res.profile) {
       profile.value = res.profile;
       storeProfile(res.profile);
-      isAdmin.value = res.isAdmin || false;
       return;
     }
   } catch {

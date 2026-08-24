@@ -1,10 +1,15 @@
 <template>
   <div class="admin-view" ref="rootEl">
-    <div v-if="checking" class="admin-loading">验证中…</div>
-    <div v-else-if="!isAdmin" class="admin-login">
+    <!-- 密码输入 -->
+    <div v-if="!token" class="admin-login">
       <div class="admin-card">
-        <h3>无权限</h3>
-        <p class="admin-hint">仅管理员账号可访问后台</p>
+        <h3>后台管理</h3>
+        <p class="admin-hint">请输入管理密码</p>
+        <input v-model="password" type="password" class="admin-pwd-input" placeholder="密码" @keyup.enter="onVerify" />
+        <p v-if="err" class="admin-error">{{ err }}</p>
+        <button class="admin-btn" :disabled="!password || verifying" @click="onVerify">
+          {{ verifying ? '验证中…' : '进入' }}
+        </button>
         <button class="admin-back" @click="$emit('back')">返回</button>
       </div>
     </div>
@@ -39,9 +44,7 @@
       <div class="classify-bars">
         <div v-for="(v, k) in stats.classifyStats" :key="k" class="bar-row">
           <span class="bar-label">{{ labels[k] || k }}</span>
-          <div class="bar-track">
-            <div class="bar-fill" :style="{ width: barWidth(v) + '%' }"></div>
-          </div>
+          <div class="bar-track"><div class="bar-fill" :style="{ width: barWidth(v) + '%' }"></div></div>
           <span class="bar-value">{{ v }}</span>
         </div>
       </div>
@@ -97,8 +100,10 @@ import { api } from '../api';
 const emit = defineEmits(['back']);
 const rootEl = ref(null);
 
-const isAdmin = ref(false);
-const checking = ref(true);
+const password = ref('');
+const token = ref(localStorage.getItem('admin_token') || '');
+const err = ref('');
+const verifying = ref(false);
 const stats = ref(null);
 
 const labels = { mood: '情绪', genre: '曲风', language: '语种', hot: '热度', custom: '自定义' };
@@ -111,12 +116,32 @@ function barWidth(v) {
 
 async function loadStats() {
   try {
-    const data = await api.getAdminStats();
+    const data = await api.getAdminStats(token.value);
     stats.value = data;
     const vals = Object.values(data.classifyStats || {});
     maxVal.value = Math.max(...vals, 1);
   } catch {
-    isAdmin.value = false;
+    token.value = '';
+    localStorage.removeItem('admin_token');
+  }
+}
+
+async function onVerify() {
+  err.value = '';
+  verifying.value = true;
+  try {
+    const res = await api.verifyAdminPassword(password.value);
+    if (res.success) {
+      token.value = res.token;
+      localStorage.setItem('admin_token', res.token);
+      await loadStats();
+    } else {
+      err.value = res.error || '密码错误';
+    }
+  } catch (e) {
+    err.value = e?.response?.data?.error || '验证失败';
+  } finally {
+    verifying.value = false;
   }
 }
 
@@ -124,12 +149,11 @@ async function onReply(id) {
   const text = replyTexts.value[id]?.trim();
   if (!text) return;
   try {
-    await api.submitFeedbackReply(id, text);
+    await api.submitFeedbackReply(id, text, token.value);
     replyTexts.value[id] = '';
     await loadStats();
   } catch (e) {
-    const msg = e?.response?.data?.error || '回复失败';
-    alert(msg);
+    alert(e?.response?.data?.error || '回复失败');
   }
 }
 
@@ -141,14 +165,13 @@ function fmtTime(iso) {
 }
 
 onMounted(async () => {
-  try {
-    const res = await api.checkAdmin();
-    isAdmin.value = res.isAdmin;
-    if (res.isAdmin) await loadStats();
-  } catch {
-    isAdmin.value = false;
-  } finally {
-    checking.value = false;
+  if (token.value) {
+    try {
+      await loadStats();
+    } catch {
+      token.value = '';
+      localStorage.removeItem('admin_token');
+    }
   }
 });
 </script>
@@ -187,9 +210,43 @@ onMounted(async () => {
   color: var(--text);
 }
 .admin-hint {
-  margin: 0 0 20px;
+  margin: 0 0 16px;
   font-size: 12px;
   color: var(--text-muted);
+}
+.admin-pwd-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+.admin-pwd-input:focus {
+  border-color: var(--border-strong);
+}
+.admin-error {
+  font-size: 12px;
+  color: var(--danger);
+  margin: 8px 0 0;
+}
+.admin-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #1d1d1d;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.admin-btn:disabled {
+  opacity: 0.4;
 }
 .admin-back {
   margin-top: 10px;

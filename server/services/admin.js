@@ -117,7 +117,7 @@ export function getStats() {
   };
 }
 
-// 判断是否为管理员账号（手机号 13310843113 或昵称 lbz老班长-）
-export function isAdminProfile(profile) {
-  return profile?.phone === '13310843113' || profile?.nickname === 'lbz老班长-';
+// 管理者密码验证
+export function verifyPassword(password) {
+  return password === '1234';
 }

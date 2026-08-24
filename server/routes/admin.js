@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getStats, trackFeedback, replyToFeedback, getUserFeedbacks, trackRating, isAdminProfile } from '../services/admin.js';
+import { getStats, trackFeedback, replyToFeedback, getUserFeedbacks, trackRating, verifyPassword } from '../services/admin.js';
 import { cookieStore } from '../services/cookieStore.js';
 
 const router = Router();
@@ -9,17 +9,23 @@ function getRecord(req) {
   return sessionId && cookieStore.get(sessionId);
 }
 
-// 验证当前登录用户是否为管理员（基于手机号）
-router.get('/check', (req, res) => {
-  const record = getRecord(req);
-  if (!record) return res.json({ isAdmin: false });
-  res.json({ isAdmin: isAdminProfile(record.profile) });
+// 管理员登录：验证密码，成功后返回 adminToken（前端 localStorage 保存）
+router.post('/verify', (req, res) => {
+  const { password } = req.body || {};
+  if (verifyPassword(password)) {
+    // 记录本次验证为管理员的 session，之后无需重复验证
+    const sessionId = req.headers['x-session-id'];
+    const token = 'admin-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    res.json({ success: true, token });
+  } else {
+    res.status(401).json({ error: '密码错误' });
+  }
 });
 
-// 获取统计数据（需管理员身份）
+// 获取统计数据（需密码 verified）
 router.get('/stats', (req, res) => {
-  const record = getRecord(req);
-  if (!record || !isAdminProfile(record.profile)) return res.status(403).json({ error: '无权限' });
+  const token = req.headers['x-admin-token'];
+  if (!token || !token.startsWith('admin-')) return res.status(403).json({ error: '无权限，请先验证密码' });
   res.json(getStats());
 });
 
@@ -42,10 +48,10 @@ router.get('/my-feedback', (req, res) => {
   res.json({ feedbacks: getUserFeedbacks(nickname) });
 });
 
-// 管理员回复反馈（需管理员身份）
+// 管理员回复反馈（需密码 verified）
 router.post('/feedback-reply', async (req, res) => {
-  const record = getRecord(req);
-  if (!record || !isAdminProfile(record.profile)) return res.status(403).json({ error: '无权限' });
+  const token = req.headers['x-admin-token'];
+  if (!token || !token.startsWith('admin-')) return res.status(403).json({ error: '无权限，请先验证密码' });
   const { id, reply } = req.body || {};
   if (!id || !reply) return res.status(400).json({ error: '缺少参数' });
   const ok = await replyToFeedback(id, reply);
