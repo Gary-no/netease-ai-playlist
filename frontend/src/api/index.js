@@ -133,14 +133,12 @@ export const api = {
   },
 
   // ===== 后台管理 =====
-  async verifyAdminPassword(password) {
-    const { data } = await http.post('/admin/verify', { password });
+  async checkAdmin() {
+    const { data } = await http.get('/admin/check');
     return data;
   },
-  async getAdminStats(token) {
-    const { data } = await http.get('/admin/stats', {
-      headers: { 'X-Admin-Token': token },
-    });
+  async getAdminStats() {
+    const { data } = await http.get('/admin/stats');
     return data;
   },
 
@@ -153,10 +151,8 @@ export const api = {
     const { data } = await http.get('/admin/my-feedback');
     return data;
   },
-  async submitFeedbackReply(id, reply, token) {
-    const { data } = await http.post('/admin/feedback-reply', { id, reply }, {
-      headers: { 'X-Admin-Token': token },
-    });
+  async submitFeedbackReply(id, reply) {
+    const { data } = await http.post('/admin/feedback-reply', { id, reply });
     return data;
   },
 

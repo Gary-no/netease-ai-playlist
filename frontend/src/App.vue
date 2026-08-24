@@ -132,7 +132,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { api, clearSessionId } from './api';
 import pkg from '../package.json';
 import LoginModal from './components/LoginModal.vue';
@@ -158,12 +158,17 @@ const loggingOut = ref(false);
 const showMenu = ref(false);
 const theme = ref(localStorage.getItem('ncm_theme') || 'dark');
 
-// 判断是否为管理员（昵称 lbz老班长- 或手机号 13310843113）
-const isAdmin = computed(() => {
-  const p = profile.value;
-  if (!p) return false;
-  return p.nickname === 'lbz老班长-' || p.phone === '13310843113';
-});
+const isAdmin = ref(false);
+
+// 登录成功后检查管理员权限
+async function checkAdmin() {
+  try {
+    const res = await api.checkAdmin();
+    isAdmin.value = res.isAdmin;
+  } catch {
+    isAdmin.value = false;
+  }
+}
 
 const changelog = [
   {
@@ -294,7 +299,10 @@ onMounted(async () => {
   applyTheme();
   try {
     const res = await api.me();
-    if (res.loggedIn) profile.value = res.profile;
+    if (res.loggedIn) {
+      profile.value = res.profile;
+      await checkAdmin();
+    }
   } catch {
     // 后端未启动时忽略
   }
@@ -348,12 +356,14 @@ async function onLoginSuccess(p) {
     const res = await api.me();
     if (res.loggedIn && res.profile) {
       profile.value = res.profile;
+      await checkAdmin();
       return;
     }
   } catch {
     // 网络异常时忽略
   }
   if (p) profile.value = p;
+  await checkAdmin();
 }
 
 async function onLogout() {

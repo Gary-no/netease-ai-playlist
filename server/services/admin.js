@@ -15,7 +15,7 @@ async function lockedWrite(data) {
   await writeQueue;
 }
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '1234abcdGary';
+const ADMIN_PHONE = '13310843113';
 
 // 默认数据结构
 const DEFAULT = {
@@ -119,6 +119,9 @@ export function getStats() {
   };
 }
 
-export function verifyPassword(password) {
-  return password === ADMIN_PASSWORD;
+// 判断是否为管理员账号（手机号 13310843113）
+export function isAdminProfile(profile) {
+  const phone = profile?.phone;
+  const userId = profile?.userId;
+  return phone === ADMIN_PHONE || userId === 13310843113;
 }

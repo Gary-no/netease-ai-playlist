@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getStats, verifyPassword, trackFeedback, replyToFeedback, getUserFeedbacks, trackRating } from '../services/admin.js';
+import { getStats, trackFeedback, replyToFeedback, getUserFeedbacks, trackRating, isAdminProfile } from '../services/admin.js';
 import { cookieStore } from '../services/cookieStore.js';
 
 const router = Router();
@@ -9,35 +9,17 @@ function getRecord(req) {
   return sessionId && cookieStore.get(sessionId);
 }
 
-// 验证管理员密码
-router.post('/verify', (req, res) => {
-  const { password } = req.body || {};
-  if (!password) return res.status(400).json({ error: '请输入密码' });
-  if (verifyPassword(password)) {
-    const token = Buffer.from(Date.now() + ':' + password).toString('base64');
-    return res.json({ token });
-  }
-  res.status(403).json({ error: '密码错误' });
+// 验证当前登录用户是否为管理员（基于手机号）
+router.get('/check', (req, res) => {
+  const record = getRecord(req);
+  if (!record) return res.json({ isAdmin: false });
+  res.json({ isAdmin: isAdminProfile(record.profile) });
 });
 
-// 获取统计数据（需密码验证）
+// 获取统计数据（需管理员身份）
 router.get('/stats', (req, res) => {
-  const auth = req.headers['x-admin-token'];
-  if (!auth) return res.status(401).json({ error: '未授权' });
-  try {
-    const decoded = Buffer.from(auth, 'base64').toString('utf-8');
-    const parts = decoded.split(':');
-    const ts = parseInt(parts[0], 10);
-    const pwd = parts.slice(1).join(':');
-    if (Date.now() - ts > 24 * 60 * 60 * 1000) {
-      return res.status(401).json({ error: 'token 已过期' });
-    }
-    if (!verifyPassword(pwd)) {
-      return res.status(401).json({ error: 'token 无效' });
-    }
-  } catch {
-    return res.status(401).json({ error: 'token 无效' });
-  }
+  const record = getRecord(req);
+  if (!record || !isAdminProfile(record.profile)) return res.status(403).json({ error: '无权限' });
   res.json(getStats());
 });
 
@@ -60,18 +42,10 @@ router.get('/my-feedback', (req, res) => {
   res.json({ feedbacks: getUserFeedbacks(nickname) });
 });
 
-// 管理员回复反馈（需密码验证）
+// 管理员回复反馈（需管理员身份）
 router.post('/feedback-reply', (req, res) => {
-  const auth = req.headers['x-admin-token'];
-  if (!auth) return res.status(401).json({ error: '未授权' });
-  try {
-    const decoded = Buffer.from(auth, 'base64').toString('utf-8');
-    const parts = decoded.split(':');
-    const pwd = parts.slice(1).join(':');
-    if (!verifyPassword(pwd)) return res.status(401).json({ error: 'token 无效' });
-  } catch {
-    return res.status(401).json({ error: 'token 无效' });
-  }
+  const record = getRecord(req);
+  if (!record || !isAdminProfile(record.profile)) return res.status(403).json({ error: '无权限' });
   const { id, reply } = req.body || {};
   if (!id || !reply) return res.status(400).json({ error: '缺少参数' });
   const ok = replyToFeedback(id, reply);

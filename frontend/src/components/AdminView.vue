@@ -1,21 +1,10 @@
 <template>
   <div class="admin-view" ref="rootEl">
-    <!-- 密码验证 -->
-    <div v-if="!token" class="admin-login">
+    <div v-if="checking" class="admin-loading">验证中…</div>
+    <div v-else-if="!isAdmin" class="admin-login">
       <div class="admin-card">
-        <h3>后台管理</h3>
-        <p class="admin-hint">请输入管理员密码</p>
-        <input
-          v-model="password"
-          type="password"
-          class="admin-input"
-          placeholder="密码"
-          @keyup.enter="onVerify"
-        />
-        <p v-if="pwdError" class="admin-error">{{ pwdError }}</p>
-        <button class="admin-btn" :disabled="verifying" @click="onVerify">
-          {{ verifying ? '验证中…' : '进入' }}
-        </button>
+        <h3>无权限</h3>
+        <p class="admin-hint">仅管理员账号可访问后台</p>
         <button class="admin-back" @click="$emit('back')">返回</button>
       </div>
     </div>
@@ -24,7 +13,7 @@
     <div v-else-if="stats" class="dashboard">
       <div class="dash-header">
         <h2>后台管理</h2>
-        <button class="admin-back" @click="onLogout">退出</button>
+        <button class="admin-back" @click="$emit('back')">返回</button>
       </div>
 
       <div class="dash-grid">
@@ -102,71 +91,40 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { api } from '../api';
 
 const emit = defineEmits(['back']);
 const rootEl = ref(null);
 
-const password = ref('');
-const pwdError = ref('');
-const verifying = ref(false);
-const token = ref(localStorage.getItem('admin_token') || '');
+const isAdmin = ref(false);
+const checking = ref(true);
 const stats = ref(null);
 
 const labels = { mood: '情绪', genre: '曲风', language: '语种', hot: '热度', custom: '自定义' };
 const replyTexts = ref({});
-
 const maxVal = ref(1);
 
 function barWidth(v) {
   return maxVal.value > 0 ? (v / maxVal.value) * 100 : 0;
 }
 
-async function onVerify() {
-  if (!password.value) return;
-  verifying.value = true;
-  pwdError.value = '';
-  try {
-    const res = await api.verifyAdminPassword(password.value);
-    if (res.token) {
-      token.value = res.token;
-      localStorage.setItem('admin_token', res.token);
-      await loadStats();
-    } else {
-      pwdError.value = res.error || '密码错误';
-    }
-  } catch (e) {
-    pwdError.value = '验证失败';
-  } finally {
-    verifying.value = false;
-  }
-}
-
 async function loadStats() {
   try {
-    const data = await api.getAdminStats(token.value);
+    const data = await api.getAdminStats();
     stats.value = data;
     const vals = Object.values(data.classifyStats || {});
     maxVal.value = Math.max(...vals, 1);
   } catch {
-    // token 过期
-    token.value = '';
-    localStorage.removeItem('admin_token');
+    isAdmin.value = false;
   }
-}
-
-function onLogout() {
-  token.value = '';
-  stats.value = null;
-  localStorage.removeItem('admin_token');
 }
 
 async function onReply(id) {
   const text = replyTexts.value[id]?.trim();
   if (!text) return;
   try {
-    await api.submitFeedbackReply(id, text, token.value);
+    await api.submitFeedbackReply(id, text);
     replyTexts.value[id] = '';
     await loadStats();
   } catch (e) {
@@ -182,8 +140,16 @@ function fmtTime(iso) {
   return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-onMounted(() => {
-  if (token.value) loadStats();
+onMounted(async () => {
+  try {
+    const res = await api.checkAdmin();
+    isAdmin.value = res.isAdmin;
+    if (res.isAdmin) await loadStats();
+  } catch {
+    isAdmin.value = false;
+  } finally {
+    checking.value = false;
+  }
 });
 </script>
 
@@ -198,8 +164,6 @@ onMounted(() => {
   overflow-y: auto;
   padding: 20px;
 }
-
-/* 密码验证 */
 .admin-login {
   display: flex;
   align-items: center;
@@ -227,40 +191,6 @@ onMounted(() => {
   font-size: 12px;
   color: var(--text-muted);
 }
-.admin-input {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--input-bg);
-  color: var(--text);
-  font-size: 14px;
-  outline: none;
-  box-sizing: border-box;
-}
-.admin-input:focus {
-  border-color: var(--border-strong);
-}
-.admin-error {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: var(--danger);
-}
-.admin-btn {
-  margin-top: 16px;
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  background: var(--accent);
-  color: #1d1d1d;
-  font-size: 14px;
-  cursor: pointer;
-  font-weight: 500;
-}
-.admin-btn:disabled {
-  opacity: 0.5;
-}
 .admin-back {
   margin-top: 10px;
   border: none;
@@ -273,8 +203,6 @@ onMounted(() => {
 .admin-back:hover {
   color: var(--text-secondary);
 }
-
-/* 仪表盘 */
 .dashboard {
   width: 100%;
   max-width: 640px;
@@ -376,6 +304,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-bottom: 28px;
 }
 .error-item {
   display: flex;
@@ -469,10 +398,6 @@ onMounted(() => {
 .fb-reply-btn:disabled {
   opacity: 0.4;
 }
-.admin-loading {
-  font-size: 14px;
-  color: var(--text-muted);
-}
 .rating-comment {
   margin-top: 4px;
   font-size: 11px;
@@ -481,7 +406,10 @@ onMounted(() => {
   flex: 1;
   min-width: 100px;
 }
-
+.admin-loading {
+  font-size: 14px;
+  color: var(--text-muted);
+}
 @media (max-width: 480px) {
   .dash-grid { grid-template-columns: repeat(2, 1fr); }
 }
