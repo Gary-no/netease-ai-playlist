@@ -737,4 +737,20 @@ async function onLogout() {
   line-height: 1.6;
   color: var(--text-secondary);
 }
+
+/* ============ Mobile ============ */
+@media (max-width: 767px) {
+  .app { padding: 0 12px; }
+  .app-header { padding: 12px 0; gap: 4px; }
+  .brand-title { font-size: 14px; }
+  .version-badge { font-size: 10px; padding: 1px 6px; }
+  .nickname { display: none; }
+  .user-area { gap: 4px; }
+  .user-menu-wrap { padding: 4px 8px; }
+  .changelog-btn, .theme-btn { padding: 4px; }
+  .changelog-btn svg, .theme-btn svg { width: 14px; height: 14px; }
+}
+@media (max-width: 480px) {
+  .version-badge { display: none; }
+}
 </style>
