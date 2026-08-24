@@ -156,6 +156,10 @@ const isAdmin = computed(() => {
 
 const changelog = [
   {
+    version: '0.5.7',
+    items: ['Baseline Reveal 重写 — scaleY 遮罩层 + transform-origin 基线定位', '文字从水平基准线向上向下同步生长展开', '修复之前的 clip-path 窗帘拉开效果'],
+  },
+  {
     version: '0.5.6',
     items: ['滚动动画改为 Mask Reveal 遮罩揭示效果', '文字从一条细线中上下展开'],
   },
