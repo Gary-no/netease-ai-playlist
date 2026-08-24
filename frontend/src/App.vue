@@ -156,6 +156,10 @@ const isAdmin = computed(() => {
 
 const changelog = [
   {
+    version: '0.5.6',
+    items: ['滚动动画改为 Mask Reveal 遮罩揭示效果', '文字从一条细线中上下展开'],
+  },
+  {
     version: '0.5.5',
     items: ['右上角新增反馈按钮（气泡图标）', '用户可提交文字反馈，后台管理页查看', '后台管理新增反馈列表'],
   },
