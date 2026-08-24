@@ -1,0 +1,27 @@
+{
+  "totalUsers": [
+    "13310843113"
+  ],
+  "dailyActive": {
+    "2026-08-23": [
+      "13310843113"
+    ]
+  },
+  "errors": [
+    {
+      "time": "2026-08-23T15:01:22.250Z",
+      "phone": "",
+      "method": "GET",
+      "url": "/api/test",
+      "message": "test error"
+    }
+  ],
+  "classifyStats": {
+    "mood": 1,
+    "genre": 1,
+    "language": 0,
+    "hot": 0,
+    "custom": 0
+  },
+  "totalClassify": 2
+}

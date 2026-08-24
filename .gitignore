@@ -2,7 +2,7 @@ node_modules/
 dist/
 dist_check*/
 .env
-server/data/
+server/data/cookies_store.json
 *.log
 .DS_Store
 
