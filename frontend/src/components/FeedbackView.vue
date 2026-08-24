@@ -133,4 +133,14 @@ onMounted(async () => {
   font-size: 12px;
   color: var(--text-muted);
 }
+
+@media (max-width: 767px) {
+  .fb-view { padding: 16px; }
+  .fb-header { gap: 8px; margin-bottom: 16px; }
+  .back-btn { width: 30px; height: 30px; font-size: 16px; flex-shrink: 0; }
+  .fb-header h3 { font-size: 15px; }
+  .fb-item { padding: 12px; }
+  .fb-content { font-size: 13px; }
+  .fb-reply { font-size: 12px; padding: 6px 8px; }
+}
 </style>
