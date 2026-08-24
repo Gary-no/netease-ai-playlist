@@ -132,7 +132,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { api, clearSessionId, getLocalProfile, storeProfile } from './api';
 import pkg from '../package.json';
 import LoginModal from './components/LoginModal.vue';
@@ -157,12 +157,7 @@ const profile = ref(null);
 const loggingOut = ref(false);
 const showMenu = ref(false);
 const theme = ref(localStorage.getItem('ncm_theme') || 'dark');
-
-const isAdmin = computed(() => {
-  const p = profile.value;
-  if (!p) return false;
-  return p.phone === '13310843113' || p.nickname === 'lbz老班长-';
-});
+const isAdmin = ref(false);
 
 const changelog = [
   {
@@ -300,6 +295,7 @@ onMounted(async () => {
       profile.value = res.profile;
       storeProfile(res.profile);
     }
+    isAdmin.value = res.isAdmin || false;
   } catch {
     // 后端未启动时忽略
   }
@@ -354,6 +350,7 @@ async function onLoginSuccess(p) {
     if (res.loggedIn && res.profile) {
       profile.value = res.profile;
       storeProfile(res.profile);
+      isAdmin.value = res.isAdmin || false;
       return;
     }
   } catch {
