@@ -16,9 +16,20 @@ const app = express();
 // 信任反向代理（Render / Cloudflare）
 app.set('trust proxy', true);
 
-// CORS：仅允许本域名
+// CORS：支持 www 和非 www 域名
+const ALLOWED_ORIGINS = [
+  config.corsOrigin,
+  'https://playlist-helper.com',
+  'https://www.playlist-helper.com',
+  'http://localhost:5173',
+  'http://localhost:4173',
+];
 app.use(cors({
-  origin: config.corsOrigin,
+  origin: (origin, cb) => {
+    // 允许无 origin 的请求（curl 等）
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    cb(null, false);
+  },
   credentials: true,
 }));
 
@@ -47,21 +58,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ============ 路由 ============
-app.use('/api/auth', (req, res, next) => {
-  res.on('finish', () => {
-    console.log(`[auth] ${req.method} ${req.originalUrl} -> ${res.statusCode}`);
-  });
-  next();
-});
-
-app.use('/api/auth', authRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/playlists', playlistRoutes);
-app.use('/api/classify', classifyRoutes);
-app.use('/api/admin', adminRoutes);
-
-// ============ 数据追踪中间件 ============
+// ============ 数据追踪中间件（放在路由之前，确保先拦截 res.json）============
 app.use((req, res, next) => {
   const oldJson = res.json.bind(res);
   res.json = function (body) {
@@ -76,10 +73,28 @@ app.use((req, res, next) => {
     if (res.statusCode >= 500) {
       trackError(req.body?.phone || '', req.method, req.originalUrl, body?.error || '服务器错误').catch(() => {});
     }
+    if (req.originalUrl === '/api/auth/qr/check' && req.method === 'GET' && res.statusCode === 200 && body?.profile) {
+      // 扫码登录成功，通过 session 获取手机号（如果存了）
+      trackLogin(body.profile?.phone || '', body.profile?.userId).catch(() => {});
+    }
     return oldJson(body);
   };
   next();
 });
+
+// ============ 路由 ============
+app.use('/api/auth', (req, res, next) => {
+  res.on('finish', () => {
+    console.log(`[auth] ${req.method} ${req.originalUrl} -> ${res.statusCode}`);
+  });
+  next();
+});
+
+app.use('/api/auth', authRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/playlists', playlistRoutes);
+app.use('/api/classify', classifyRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
