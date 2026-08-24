@@ -1,14 +1,19 @@
 import { Router } from 'express';
-import { getStats, verifyPassword, trackFeedback } from '../services/admin.js';
+import { getStats, verifyPassword, trackFeedback, replyToFeedback, getUserFeedbacks, trackRating } from '../services/admin.js';
+import { cookieStore } from '../services/cookieStore.js';
 
 const router = Router();
 
-// 验证管理员密码（返回 token，前端存 localStorage 用于后续请求）
+function getRecord(req) {
+  const sessionId = req.headers['x-session-id'];
+  return sessionId && cookieStore.get(sessionId);
+}
+
+// 验证管理员密码
 router.post('/verify', (req, res) => {
   const { password } = req.body || {};
   if (!password) return res.status(400).json({ error: '请输入密码' });
   if (verifyPassword(password)) {
-    // 简单 token：base64(时间戳+密码) 前端存本地，每次请求带上
     const token = Buffer.from(Date.now() + ':' + password).toString('base64');
     return res.json({ token });
   }
@@ -24,7 +29,6 @@ router.get('/stats', (req, res) => {
     const parts = decoded.split(':');
     const ts = parseInt(parts[0], 10);
     const pwd = parts.slice(1).join(':');
-    // token 24 小时内有效
     if (Date.now() - ts > 24 * 60 * 60 * 1000) {
       return res.status(401).json({ error: 'token 已过期' });
     }
@@ -37,11 +41,52 @@ router.get('/stats', (req, res) => {
   res.json(getStats());
 });
 
-// 用户提交反馈（无需验证）
+// 用户提交反馈（需登录）
 router.post('/feedback', (req, res) => {
-  const { nickname, content } = req.body || {};
+  const record = getRecord(req);
+  if (!record) return res.status(401).json({ error: '请先登录' });
+  const { content } = req.body || {};
   if (!content || !content.trim()) return res.status(400).json({ error: '请输入反馈内容' });
-  trackFeedback(nickname || '匿名用户', content.trim());
+  const nickname = record.profile?.nickname || '未知用户';
+  const id = trackFeedback(nickname, content.trim());
+  res.json({ success: true, id });
+});
+
+// 查看自己的反馈记录（需登录）
+router.get('/my-feedback', (req, res) => {
+  const record = getRecord(req);
+  if (!record) return res.status(401).json({ error: '请先登录' });
+  const nickname = record.profile?.nickname || '未知用户';
+  res.json({ feedbacks: getUserFeedbacks(nickname) });
+});
+
+// 管理员回复反馈（需密码验证）
+router.post('/feedback-reply', (req, res) => {
+  const auth = req.headers['x-admin-token'];
+  if (!auth) return res.status(401).json({ error: '未授权' });
+  try {
+    const decoded = Buffer.from(auth, 'base64').toString('utf-8');
+    const parts = decoded.split(':');
+    const pwd = parts.slice(1).join(':');
+    if (!verifyPassword(pwd)) return res.status(401).json({ error: 'token 无效' });
+  } catch {
+    return res.status(401).json({ error: 'token 无效' });
+  }
+  const { id, reply } = req.body || {};
+  if (!id || !reply) return res.status(400).json({ error: '缺少参数' });
+  const ok = replyToFeedback(id, reply);
+  if (!ok) return res.status(404).json({ error: '反馈不存在' });
+  res.json({ success: true });
+});
+
+// 提交歌单评价（需登录）
+router.post('/rate', (req, res) => {
+  const record = getRecord(req);
+  if (!record) return res.status(401).json({ error: '请先登录' });
+  const { mode, categories, score } = req.body || {};
+  if (!score) return res.status(400).json({ error: '请选择评价' });
+  const nickname = record.profile?.nickname || '未知用户';
+  trackRating(nickname, mode || '', categories || [], score);
   res.json({ success: true });
 });
 

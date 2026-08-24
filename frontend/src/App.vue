@@ -74,6 +74,9 @@
 
       <!-- 后台管理 -->
       <AdminView v-if="view === 'admin'" key="admin" @back="view = 'home'" />
+
+      <!-- 反馈记录 -->
+      <FeedbackView v-if="view === 'feedback'" key="feedback" @back="view = 'home'" />
     </main>
 
     <LoginModal :visible="showLogin" @close="showLogin = false" @success="onLoginSuccess" />
@@ -85,19 +88,26 @@
           <h3>反馈</h3>
           <button class="changelog-close" @click="showFeedback = false">✕</button>
         </div>
-        <textarea
-          v-model="feedbackContent"
-          class="feedback-input"
-          rows="4"
-          placeholder="描述你的问题或建议…"
-        ></textarea>
-        <p v-if="feedbackSent" class="feedback-done">已收到，谢谢反馈！</p>
-        <button
-          v-if="!feedbackSent"
-          class="feedback-submit"
-          :disabled="!feedbackContent.trim() || feedbackSending"
-          @click="onSubmitFeedback"
-        >{{ feedbackSending ? '发送中…' : '发送' }}</button>
+        <template v-if="!profile">
+          <p class="feedback-login-hint">请先登录后再提交反馈</p>
+          <button class="feedback-submit" @click="showLogin = true; showFeedback = false">去登录</button>
+        </template>
+        <template v-else>
+          <textarea
+            v-model="feedbackContent"
+            class="feedback-input"
+            rows="4"
+            placeholder="描述你的问题或建议…"
+          ></textarea>
+          <p v-if="feedbackSent" class="feedback-done">已收到，谢谢反馈！</p>
+          <button
+            v-if="!feedbackSent"
+            class="feedback-submit"
+            :disabled="!feedbackContent.trim() || feedbackSending"
+            @click="onSubmitFeedback"
+          >{{ feedbackSending ? '发送中…' : '发送' }}</button>
+          <button class="feedback-my-link" @click="showFeedback = false; view = 'feedback'">我的反馈记录 →</button>
+        </template>
       </div>
     </div>
 
@@ -131,6 +141,7 @@ import SelectView from './components/SelectView.vue';
 import ClassifyFlow from './components/ClassifyFlow.vue';
 import ChatPanel from './components/ChatPanel.vue';
 import AdminView from './components/AdminView.vue';
+import FeedbackView from './components/FeedbackView.vue';
 
 const APP_VERSION = pkg.version;
 
@@ -155,6 +166,10 @@ const isAdmin = computed(() => {
 });
 
 const changelog = [
+  {
+    version: '0.6',
+    items: ['反馈系统升级：需登录提交，用户可查看反馈记录与管理员回复', '管理员可逐条回复反馈', '生成歌单后提供评价选项（满意/一般/不满意）', '后台管理新增评价列表'],
+  },
   {
     version: '0.5.5',
     items: ['右上角新增反馈按钮（气泡图标）', '用户可提交文字反馈，后台管理页查看', '后台管理新增反馈列表'],
@@ -293,9 +308,10 @@ function onAdmin() {
 async function onSubmitFeedback() {
   const text = feedbackContent.value.trim();
   if (!text) return;
+  feedbackContent.value = '';
   feedbackSending.value = true;
   try {
-    await api.submitFeedback(profile.value?.nickname || '', text);
+    await api.submitFeedback(text);
     feedbackSent.value = true;
   } catch {
     // 失败不阻塞
@@ -670,6 +686,27 @@ async function onLogout() {
   font-size: 13px;
   color: var(--text-secondary);
   text-align: center;
+}
+.feedback-login-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 12px 0;
+}
+.feedback-my-link {
+  margin-top: 8px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 6px;
+}
+.feedback-my-link:hover {
+  color: var(--text-secondary);
 }
 .changelog-body {
   overflow-y: auto;

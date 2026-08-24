@@ -133,8 +133,22 @@ export const api = {
   },
 
   // ===== 反馈 =====
-  async submitFeedback(nickname, content) {
-    const { data } = await http.post('/admin/feedback', { nickname, content });
+  async submitFeedback(content) {
+    const { data } = await http.post('/admin/feedback', { content });
+    return data;
+  },
+  async getMyFeedbacks() {
+    const { data } = await http.get('/admin/my-feedback');
+    return data;
+  },
+  async submitFeedbackReply(id, reply) {
+    const { data } = await http.post('/admin/feedback-reply', { id, reply });
+    return data;
+  },
+
+  // ===== 歌单评价 =====
+  async submitRating(mode, categories, score) {
+    const { data } = await http.post('/admin/rate', { mode, categories, score });
     return data;
   },
 };

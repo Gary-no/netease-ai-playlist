@@ -211,6 +211,15 @@
           <button class="primary" @click="openNetease">跳转到网易云</button>
           <button class="ghost" @click="showDone = false">关闭</button>
         </div>
+        <div class="rating" v-if="!rated">
+          <p class="rating-label">这个分类结果怎么样？</p>
+          <div class="rating-btns">
+            <button class="rate-btn" :class="{ active: ratingScore === 'good' }" @click="onRate('good')">👍 满意</button>
+            <button class="rate-btn" :class="{ active: ratingScore === 'ok' }" @click="onRate('ok')">🤔 一般</button>
+            <button class="rate-btn" :class="{ active: ratingScore === 'bad' }" @click="onRate('bad')">👎 不满意</button>
+          </div>
+          <p v-if="ratingDone" class="rating-thanks">感谢评价</p>
+        </div>
       </div>
     </div>
   </div>
@@ -257,6 +266,9 @@ const generated = ref([]); // 每类是否已生成
 const generating = ref([]); // 每类是否生成中
 const showDone = ref(false); // 生成完成弹窗
 const doneInfo = ref(null); // 完成的歌单信息 { name, playlistId, count }
+const ratingScore = ref('');
+const ratingDone = ref(false);
+const rated = ref(false);
 const error = ref('');
 const progress = ref(0);        // 后端报告的原始值（目标）
 const smoothProgress = ref(0);   // 前端平滑显示值
@@ -462,6 +474,13 @@ function openNetease() {
     window.open(`https://music.163.com/#/playlist?id=${doneInfo.value.playlistId}`, '_blank');
   }
   showDone.value = false;
+}
+
+function onRate(score) {
+  ratingScore.value = score;
+  rated.value = true;
+  ratingDone.value = true;
+  api.submitRating(props.mode, catNames.value || [], score).catch(() => {});
 }
 
 function fmtDuration(sec) {
@@ -1043,6 +1062,45 @@ function fmtDuration(sec) {
   font-size: 14px;
   cursor: pointer;
   font-weight: 600;
+}
+.rating {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.rating-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.rating-btns {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+.rate-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.rate-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+.rate-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--text);
+}
+.rating-thanks {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 .done-actions button.primary {
   border: none;

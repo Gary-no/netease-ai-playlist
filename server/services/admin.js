@@ -21,7 +21,8 @@ const DEFAULT = {
     custom: 0,
   },
   totalClassify: 0,
-  feedbacks: [],    // [{ time, nickname, content }]
+  feedbacks: [],    // [{ id, time, nickname, content, reply: null }]
+  ratings: [],      // [{ time, nickname, mode, categories, score }]
 };
 
 function today() {
@@ -79,11 +80,38 @@ export function trackError(phone, method, url, message) {
   save(data);
 }
 
-// 记录用户反馈
+// 记录用户反馈（带序号和回复字段）
+let fbId = 0;
 export function trackFeedback(nickname, content) {
   const data = load();
-  data.feedbacks.unshift({ time: new Date().toISOString(), nickname, content });
+  fbId++;
+  data.feedbacks.unshift({ id: fbId, time: new Date().toISOString(), nickname, content, reply: null });
   if (data.feedbacks.length > 200) data.feedbacks = data.feedbacks.slice(0, 200);
+  save(data);
+  return fbId;
+}
+
+// 管理员回复反馈
+export function replyToFeedback(feedbackId, reply) {
+  const data = load();
+  const fb = data.feedbacks.find((f) => f.id === feedbackId);
+  if (!fb) return false;
+  fb.reply = reply;
+  save(data);
+  return true;
+}
+
+// 获取用户自己的反馈（含回复）
+export function getUserFeedbacks(nickname) {
+  const data = load();
+  return data.feedbacks.filter((f) => f.nickname === nickname).slice(0, 50);
+}
+
+// 记录歌单评价
+export function trackRating(nickname, mode, categories, score) {
+  const data = load();
+  data.ratings.unshift({ time: new Date().toISOString(), nickname, mode, categories, score });
+  if (data.ratings.length > 500) data.ratings = data.ratings.slice(0, 500);
   save(data);
 }
 
@@ -112,6 +140,7 @@ export function getStats() {
     classifyStats: data.classifyStats,
     errors: data.errors.slice(0, 50),
     feedbacks: data.feedbacks.slice(0, 50),
+    ratings: data.ratings.slice(0, 50),
   };
 }
 

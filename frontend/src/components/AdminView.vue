@@ -75,6 +75,23 @@
           <span class="error-time">{{ fmtTime(f.time) }}</span>
           <span class="fb-nickname">{{ f.nickname }}</span>
           <span class="fb-content">{{ f.content }}</span>
+          <div v-if="f.reply" class="fb-existing-reply">回复：{{ f.reply }}</div>
+          <div v-else class="fb-reply-row">
+            <input v-model="replyTexts[f.id]" class="fb-reply-input" placeholder="回复…" @keyup.enter="onReply(f.id)" />
+            <button class="fb-reply-btn" :disabled="!replyTexts[f.id]?.trim()" @click="onReply(f.id)">回复</button>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="dash-section-title">歌单评价</h3>
+      <div v-if="!stats.ratings?.length" class="dash-empty">暂无评价</div>
+      <div v-else class="error-list">
+        <div v-for="(r, i) in stats.ratings" :key="i" class="error-item">
+          <span class="error-time">{{ fmtTime(r.time) }}</span>
+          <span class="fb-nickname">{{ r.nickname }}</span>
+          <span class="error-method">{{ r.score }}</span>
+          <span class="error-url">{{ r.mode }}</span>
+          <span class="error-msg">{{ (r.categories || []).join(', ') }}</span>
         </div>
       </div>
     </div>
@@ -97,6 +114,7 @@ const token = ref(localStorage.getItem('admin_token') || '');
 const stats = ref(null);
 
 const labels = { mood: '情绪', genre: '曲风', language: '语种', hot: '热度', custom: '自定义' };
+const replyTexts = ref({});
 
 const maxVal = ref(1);
 
@@ -141,6 +159,18 @@ function onLogout() {
   token.value = '';
   stats.value = null;
   localStorage.removeItem('admin_token');
+}
+
+async function onReply(id) {
+  const text = replyTexts.value[id]?.trim();
+  if (!text) return;
+  try {
+    await api.submitFeedbackReply(id, text);
+    replyTexts.value[id] = '';
+    await loadStats();
+  } catch {
+    // ignore
+  }
 }
 
 function fmtTime(iso) {
@@ -393,6 +423,49 @@ onMounted(() => {
 .fb-content {
   color: var(--text-secondary);
   line-height: 1.6;
+}
+.fb-existing-reply {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--accent);
+  padding: 6px 8px;
+  background: var(--accent-soft);
+  border-radius: 6px;
+  width: 100%;
+}
+.fb-reply-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  width: 100%;
+}
+.fb-reply-input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+  min-width: 0;
+}
+.fb-reply-input:focus {
+  border-color: var(--border-strong);
+}
+.fb-reply-btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #1d1d1d;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.fb-reply-btn:disabled {
+  opacity: 0.4;
 }
 .admin-loading {
   font-size: 14px;
