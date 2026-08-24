@@ -17,31 +17,26 @@
       </div>
     </section>
 
-    <!-- ============ 逐字说明 ============ -->
+    <!-- ============ 段落 ============ -->
     <section class="section">
-      <p class="section-text char-block">
-        <span
-          v-for="(c, i) in chars"
-          :key="i"
-          class="char"
-          :style="{ '--i': i, '--r': randomOff(i) }"
-        ><template v-if="c === ' '">&nbsp;</template><template v-else>{{ c }}</template></span>
+      <p class="section-text mask-reveal">
+        连接网易云账号，AI 按情绪、曲风、语种或热度分类整理。不删不改。
       </p>
-      <div v-if="!loggedIn" class="trust-row">
+      <div v-if="!loggedIn" class="trust-row mask-reveal">
         <span>仅读歌单 · 不改不删 · 随时撤销</span>
       </div>
-      <p v-else class="trusted-text">已连接</p>
+      <p v-else class="trusted-text mask-reveal">已连接</p>
     </section>
 
     <!-- ============ 整理前后 ============ -->
     <section class="section">
-      <h2 class="section-title">整理前后</h2>
-      <div class="ba-wrap">
+      <h2 class="section-title mask-reveal">整理前后</h2>
+      <div class="ba-wrap mask-reveal">
         <div class="ba-col">
           <p class="ba-label">之前</p>
           <div class="ba-item">我喜欢的音乐 482 首</div>
         </div>
-        <div class="ba-col ba-after">
+        <div class="ba-col">
           <p class="ba-label">之后</p>
           <div class="ba-list">
             <span>深夜治愈</span>
@@ -55,8 +50,8 @@
 
     <!-- ============ 玩法 ============ -->
     <section class="section">
-      <h2 class="section-title">三步完成</h2>
-      <div class="steps">
+      <h2 class="section-title mask-reveal">三步完成</h2>
+      <div class="steps mask-reveal">
         <div class="step">
           <span class="step-num">01</span>
           <strong>登录</strong>
@@ -74,12 +69,12 @@
 
     <!-- ============ CTA ============ -->
     <section class="section cta-section" @click="onStart">
-      <h2 class="cta-title">现在开始</h2>
-      <div class="cta-arrow">→</div>
+      <h2 class="cta-title mask-reveal">现在开始</h2>
+      <div class="cta-arrow mask-reveal">→</div>
     </section>
 
     <!-- ============ Footer ============ -->
-    <footer class="footer">
+    <footer class="footer mask-reveal">
       免费 · v{{ version }}
     </footer>
   </div>
@@ -98,14 +93,6 @@ let ctx;
 
 gsap.registerPlugin(ScrollTrigger);
 
-const text = '连接网易云账号，AI 按情绪、曲风、语种或热度自动分类整理。不删不改。';
-const chars = text.split('');
-
-function randomOff(i) {
-  // 交替变化偏移量，营造错落感
-  return (i % 3) * 4 + (Math.sin(i * 0.7) > 0 ? 3 : -2);
-}
-
 function onStart() {
   emit('start');
 }
@@ -113,36 +100,22 @@ function onStart() {
 onMounted(() => {
   const root = rootEl.value;
   ctx = gsap.context(() => {
+    // Hero 入场
     gsap.from('.hero-label', { y: 16, opacity: 0, duration: 0.5, ease: 'power2.out', delay: 0.1 });
     gsap.from('.hero-title', { y: 32, opacity: 0, duration: 0.6, ease: 'power2.out', delay: 0.2 });
     gsap.from('.hero-sub', { y: 16, opacity: 0, duration: 0.5, ease: 'power2.out', delay: 0.4 });
 
-    // 逐字动画：每个字 y 偏移 + 透明度 + blur 根据 --r 错落
-    gsap.utils.toArray('.char-block').forEach((block) => {
-      const els = block.querySelectorAll('.char');
-      gsap.from(els, {
-        y: (i) => 10 + (i % 5) * 2,
-        opacity: 0,
-        filter: 'blur(2px)',
-        duration: 0.4,
-        ease: 'power2.out',
-        stagger: { each: 0.035, from: 'start' },
-        scrollTrigger: { trigger: block, scroller: root, start: 'top 80%' },
-      });
-    });
-
-    // Section titles
-    gsap.utils.toArray('.section-title').forEach((el) => {
-      gsap.from(el, {
-        y: 20, opacity: 0, duration: 0.45, ease: 'power2.out',
-        scrollTrigger: { trigger: el, scroller: root, start: 'top 86%' },
-      });
-    });
-
-    // CTA
-    gsap.from('.cta-title', {
-      y: 30, opacity: 0, duration: 0.6, ease: 'power2.out',
-      scrollTrigger: { trigger: '.cta-section', scroller: root, start: 'top 82%' },
+    // === Mask Reveal：从一条细线展开 ===
+    gsap.utils.toArray('.mask-reveal').forEach((el) => {
+      gsap.fromTo(el,
+        { clipPath: 'inset(50% 0 50% 0)' },
+        {
+          clipPath: 'inset(0 0 0 0)',
+          duration: 0.75,
+          ease: 'power3.out',
+          scrollTrigger: { trigger: el, scroller: root, start: 'top 88%' },
+        }
+      );
     });
   }, root);
 });
@@ -159,8 +132,10 @@ onUnmounted(() => ctx && ctx.revert());
   text-align: center;
   background: var(--bg);
 }
-
-/* ============ HERO ============ */
+.mask-reveal {
+  clip-path: inset(50% 0 50% 0);
+  will-change: clip-path;
+}
 .hero {
   min-height: 100vh;
   display: flex;
@@ -188,6 +163,9 @@ onUnmounted(() => ctx && ctx.revert());
   font-size: clamp(44px, 10vw, 110px);
   line-height: 1;
   font-weight: 400;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  text-wrap: balance;
 }
 .hero-sub {
   margin: 0;
@@ -198,7 +176,6 @@ onUnmounted(() => ctx && ctx.revert());
   margin: 0 auto;
 }
 .mob-br { display: none; }
-
 .scroll-cue {
   position: absolute;
   bottom: 28px;
@@ -228,8 +205,6 @@ onUnmounted(() => ctx && ctx.revert());
   30%  { transform: scaleY(1); opacity: 1; }
   100% { transform: scaleY(1) translateY(10px); opacity: 0; }
 }
-
-/* ============ Sections ============ */
 .section {
   max-width: 680px;
   margin: 0 auto;
@@ -243,8 +218,6 @@ onUnmounted(() => ctx && ctx.revert());
   letter-spacing: -0.02em;
   color: var(--text);
 }
-
-/* 逐字段落 */
 .section-text {
   margin: 0 auto 16px;
   font-size: clamp(14px, 1.5vw, 16px);
@@ -252,10 +225,6 @@ onUnmounted(() => ctx && ctx.revert());
   color: var(--text-secondary);
   max-width: 540px;
 }
-.char {
-  display: inline;
-}
-
 .trust-row {
   font-size: 12px;
   color: var(--text-muted);
@@ -266,8 +235,6 @@ onUnmounted(() => ctx && ctx.revert());
   font-size: 12px;
   color: var(--text-muted);
 }
-
-/* ============ 整理前后 ============ */
 .ba-wrap {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -309,8 +276,6 @@ onUnmounted(() => ctx && ctx.revert());
   color: var(--text);
   background: var(--surface);
 }
-
-/* ============ Steps ============ */
 .steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -339,8 +304,6 @@ onUnmounted(() => ctx && ctx.revert());
   color: var(--text);
   letter-spacing: 0.03em;
 }
-
-/* ============ CTA ============ */
 .cta-section {
   min-height: 60vh;
   display: flex;
@@ -372,15 +335,11 @@ onUnmounted(() => ctx && ctx.revert());
   0%, 100% { opacity: 0.25; transform: translateY(0); }
   50% { opacity: 0.6; transform: translateY(5px); }
 }
-
-/* ============ Footer ============ */
 .footer {
   padding: 50px 24px 32px;
   font-size: 11px;
   color: var(--text-muted);
 }
-
-/* ============ Mobile ============ */
 @media (max-width: 767px) {
   .hero { padding: 32px 20px 72px; }
   .hero-title { font-size: clamp(36px, 12vw, 52px); }
