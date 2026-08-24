@@ -2,22 +2,32 @@ name: Keep Render Services Alive
 
 on:
   schedule:
-    # 每 10 分钟 ping 一次（防止 15 分钟休眠）
-    - cron: '*/10 * * * *'
+    # 每 5 分钟 ping 一次，留足余量对抗 GitHub Actions 调度延迟
+    - cron: '*/5 * * * *'
   workflow_dispatch: # 支持手动触发
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping 后端服务
+      - name: Ping 后端服务 + 网易云 API
         run: |
+          FAIL=0
+          
           echo "=== Ping ai-playlist-server ==="
-          curl -f -s -o /dev/null -w "HTTP %{http_code} time=%{time_total}s\n" \
-            --max-time 30 https://api.playlist-helper.com/health || echo "后端 ping 失败"
+          curl -s -o /dev/null -w "HTTP %{http_code} time=%{time_total}s\n" \
+            --max-time 35 https://api.playlist-helper.com/health || { echo "❌ 后端 ping 失败"; FAIL=1; }
           
           echo "=== Ping 网易云 API 服务 ==="
-          curl -f -s -o /dev/null -w "HTTP %{http_code} time=%{time_total}s\n" \
-            --max-time 30 https://netease-api-x8t6.onrender.com/ || echo "API ping 失败"
+          curl -s -o /dev/null -w "HTTP %{http_code} time=%{time_total}s\n" \
+            --max-time 35 https://netease-api-x8t6.onrender.com/ || { echo "❌ API ping 失败"; FAIL=1; }
           
-          echo "✅ Keep-alive ping 完成"
+          echo "=== Warm up 二维码链路 ==="
+          curl -s -o /dev/null -w "HTTP %{http_code} time=%{time_total}s\n" \
+            --max-time 35 https://api.playlist-helper.com/api/auth/qr/key || { echo "❌ QR 链路 warmup 失败"; FAIL=1; }
+          
+          if [ "$FAIL" = "1" ]; then
+            echo "⚠️ 部分服务未响应，下次重试"
+          else
+            echo "✅ 全部服务在线"
+          fi

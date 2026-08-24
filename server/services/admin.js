@@ -6,28 +6,29 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '..', 'data');
 const FILE = join(DATA_DIR, 'admin.json');
 
+// 简单的文件写入锁（单实例足够，多实例需换 Redis）
+let writeQueue = Promise.resolve();
+async function lockedWrite(data) {
+  writeQueue = writeQueue.then(() => {
+    writeFileSync(FILE, JSON.stringify(data, null, 2));
+  });
+  await writeQueue;
+}
+
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '1234abcdGary';
 
 // 默认数据结构
 const DEFAULT = {
-  totalUsers: [],       // 手机号列表（去重）
-  dailyActive: {},      // { "2026-08-23": ["138xxx", ...] }
-  errors: [],           // [{ time, phone, userId, method, url, message }]
-  classifyStats: {      // 各维度使用次数
-    mood: 0,
-    genre: 0,
-    language: 0,
-    hot: 0,
-    custom: 0,
-  },
+  totalUsers: [],
+  dailyActive: {},
+  errors: [],
+  classifyStats: { mood: 0, genre: 0, language: 0, hot: 0, custom: 0 },
   totalClassify: 0,
-  feedbacks: [],    // [{ id, time, nickname, content, reply: null }]
-  ratings: [],      // [{ time, nickname, mode, categories, score }]
+  feedbacks: [],
+  ratings: [],
 };
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
+function today() { return new Date().toISOString().slice(0, 10); }
 
 function load() {
   if (!existsSync(FILE)) {
@@ -35,107 +36,81 @@ function load() {
     writeFileSync(FILE, JSON.stringify(DEFAULT, null, 2));
     return { ...DEFAULT };
   }
-  try {
-    return JSON.parse(readFileSync(FILE, 'utf-8'));
-  } catch {
-    return { ...DEFAULT };
-  }
+  try { return JSON.parse(readFileSync(FILE, 'utf-8')); }
+  catch { return { ...DEFAULT }; }
 }
 
-function save(data) {
-  writeFileSync(FILE, JSON.stringify(data, null, 2));
-}
-
-// 记录用户登录
-export function trackLogin(phone, userId) {
+// 所有写操作都走锁，防止并发写损坏 JSON
+export async function trackLogin(phone, userId) {
   const data = load();
-  if (phone && !data.totalUsers.includes(phone)) {
-    data.totalUsers.push(phone);
-  }
+  if (phone && !data.totalUsers.includes(phone)) data.totalUsers.push(phone);
   const d = today();
   if (!data.dailyActive[d]) data.dailyActive[d] = [];
-  if (phone && !data.dailyActive[d].includes(phone)) {
-    data.dailyActive[d].push(phone);
-  }
-  save(data);
+  if (phone && !data.dailyActive[d].includes(phone)) data.dailyActive[d].push(phone);
+  await lockedWrite(data);
 }
 
-// 记录分类
-export function trackClassify(mode) {
+export async function trackClassify(mode) {
   const data = load();
-  if (data.classifyStats[mode] !== undefined) {
-    data.classifyStats[mode]++;
-  }
+  if (data.classifyStats[mode] !== undefined) data.classifyStats[mode]++;
   data.totalClassify++;
-  // 记录活跃
   data.dailyActive[today()] = data.dailyActive[today()] || [];
-  save(data);
+  await lockedWrite(data);
 }
 
-// 记录错误
-export function trackError(phone, method, url, message) {
+export async function trackError(phone, method, url, message) {
   const data = load();
   data.errors.unshift({ time: new Date().toISOString(), phone, method, url, message });
   if (data.errors.length > 200) data.errors = data.errors.slice(0, 200);
-  save(data);
+  await lockedWrite(data);
 }
 
-// 记录用户反馈（带序号和回复字段）
 let fbId = 0;
-export function trackFeedback(nickname, content) {
+export async function trackFeedback(nickname, content) {
   const data = load();
   fbId++;
   data.feedbacks.unshift({ id: fbId, time: new Date().toISOString(), nickname, content, reply: null });
   if (data.feedbacks.length > 200) data.feedbacks = data.feedbacks.slice(0, 200);
-  save(data);
+  await lockedWrite(data);
   return fbId;
 }
 
-// 管理员回复反馈
-export function replyToFeedback(feedbackId, reply) {
+export async function replyToFeedback(feedbackId, reply) {
   const data = load();
   const fb = data.feedbacks.find((f) => f.id === feedbackId);
   if (!fb) return false;
   fb.reply = reply;
-  save(data);
+  await lockedWrite(data);
   return true;
 }
 
-// 获取用户自己的反馈（含回复）
 export function getUserFeedbacks(nickname) {
   const data = load();
   return data.feedbacks.filter((f) => f.nickname === nickname).slice(0, 50);
 }
 
-// 记录歌单评价
-export function trackRating(nickname, mode, categories, score, comment) {
+export async function trackRating(nickname, mode, categories, score, comment) {
   const data = load();
   data.ratings.unshift({ time: new Date().toISOString(), nickname, mode, categories, score, comment: comment || '' });
   if (data.ratings.length > 500) data.ratings = data.ratings.slice(0, 500);
-  save(data);
+  await lockedWrite(data);
 }
 
-// 获取统计数据
 export function getStats() {
   const data = load();
   const d = today();
   const todayActive = (data.dailyActive[d] || []).length;
-  // 7 日活跃
   const sevenDays = [];
   for (let i = 0; i < 7; i++) {
     const date = new Date();
     date.setDate(date.getDate() - i);
     const key = date.toISOString().slice(0, 10);
-    if (data.dailyActive[key]) {
-      sevenDays.push(...data.dailyActive[key]);
-    }
+    if (data.dailyActive[key]) sevenDays.push(...data.dailyActive[key]);
   }
-  const sevenDayActive = new Set(sevenDays).size;
-
   return {
     totalUsers: data.totalUsers.length,
     todayActive,
-    sevenDayActive,
+    sevenDayActive: new Set(sevenDays).size,
     totalClassify: data.totalClassify,
     classifyStats: data.classifyStats,
     errors: data.errors.slice(0, 50),
@@ -144,7 +119,6 @@ export function getStats() {
   };
 }
 
-// 验证管理员密码
 export function verifyPassword(password) {
   return password === ADMIN_PASSWORD;
 }

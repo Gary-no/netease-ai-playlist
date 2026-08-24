@@ -36,5 +36,7 @@ services:
         sync: false
       - key: LLM_MODEL
         value: deepseek-chat
-      - key: COOKIE_SECRET        # 敏感：随便填一串随机字符
+      - key: COOKIE_SECRET        # 敏感：用 openssl rand -hex 32 生成，在 Render 控制台手动填
         sync: false
+      - key: CORS_ORIGIN          # 前端域名
+        value: https://www.playlist-helper.com

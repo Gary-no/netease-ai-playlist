@@ -2,6 +2,8 @@ import axios from 'axios';
 
 // 会话 ID：用于后端关联网易云 Cookie。前端本地持久化，同一浏览器保持同一身份
 const SESSION_KEY = 'ncm_ai_session_id';
+const COOKIE_KEY = 'ncm_encrypted_cookie';
+
 export function getSessionId() {
   let sid = localStorage.getItem(SESSION_KEY);
   if (!sid) {
@@ -11,18 +13,26 @@ export function getSessionId() {
   return sid;
 }
 
-// 退出登录时清空本地会话，下次登录使用全新身份
+// 退出登录时清空本地会话和 Cookie
 export function clearSessionId() {
   localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(COOKIE_KEY);
+}
+
+// 存储加密的网易云 Cookie（登陆后由后端返回）
+export function storeNcmCookie(encrypted) {
+  if (encrypted) localStorage.setItem(COOKIE_KEY, encrypted);
 }
 
 // API 基础地址：本地开发用 /api（走 Vite proxy），生产部署用 VITE_API_BASE 指向后端域名
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 const http = axios.create({ baseURL: API_BASE, timeout: 120000 });
 
-// 所有请求自动携带会话 ID
+// 所有请求自动携带会话 ID + 加密 Cookie
 http.interceptors.request.use((config) => {
   config.headers['X-Session-Id'] = getSessionId();
+  const cookie = localStorage.getItem(COOKIE_KEY);
+  if (cookie) config.headers['X-Ncm-Cookie'] = cookie;
   return config;
 });
 
@@ -41,6 +51,7 @@ export const api = {
   // 800=过期 801=等待扫码 802=已扫码待确认 803=成功
   async checkQr(unikey) {
     const { data } = await http.get('/auth/qr/check', { params: { key: unikey } });
+    if (data._cookie) storeNcmCookie(data._cookie);
     return data;
   },
 
@@ -65,6 +76,7 @@ export const api = {
   // 手机验证码登录
   async loginByCellphone(phone, captcha) {
     const { data } = await http.post('/auth/cellphone', { phone, captcha });
+    if (data._cookie) storeNcmCookie(data._cookie);
     return data;
   },
 

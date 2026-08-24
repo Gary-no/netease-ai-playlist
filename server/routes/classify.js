@@ -3,6 +3,7 @@ import { neteaseApi } from '../services/netease.js';
 import { cookieStore } from '../services/cookieStore.js';
 import { classifySongs } from '../services/llm.js';
 import { createTask, getTask, setProgress } from '../services/taskStore.js';
+import { dailyLimit, getDailyCount } from '../services/rateLimit.js';
 
 const router = Router();
 
@@ -157,6 +158,15 @@ router.post('/start', async (req, res) => {
   } = req.body || {};
   if (!Array.isArray(playlistIds) || !playlistIds.length) {
     return res.status(400).json({ error: '请选择至少一个歌单' });
+  }
+
+  // 每日分类上限：3次/用户
+  const sessionId = req.headers['x-session-id'];
+  if (sessionId) {
+    if (!dailyLimit(`classify:${sessionId}`, 3)) {
+      const used = getDailyCount(`classify:${sessionId}`);
+      return res.status(429).json({ error: `今日分类次数已达上限（3次），已使用 ${used} 次` });
+    }
   }
 
   const task = createTask();

@@ -67,6 +67,27 @@ class CookieStore {
     return { ...record, cookie: this._decrypt(record.cookie) };
   }
 
+  // 从前端 localStorage 导入网易云 Cookie（用于部署后恢复登录态）
+  import(sessionId, cookie, profile) {
+    if (!cookie) return;
+    this.data[sessionId] = {
+      cookie: this._encrypt(cookie),
+      profile: profile || { nickname: '网易云用户', userId: null, avatarUrl: '' },
+      updatedAt: Date.now(),
+    };
+    this._persist();
+  }
+
+  // 加密 Cookie 供前端 localStorage 存储（不含 sessionId 关联）
+  rawEncrypt(cookie) {
+    return this._encrypt(cookie);
+  }
+
+  // 解密前端 localStorage 中的加密 Cookie
+  rawDecrypt(payload) {
+    return this._decrypt(payload);
+  }
+
   delete(sessionId) {
     delete this.data[sessionId];
     this._persist();

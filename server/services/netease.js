@@ -7,11 +7,31 @@ if (config.mock) {
   console.log('⚡ 演示模式已开启（MOCK=true），使用模拟数据');
 }
 
+// 指数退避重试（429/502 冷启动/限流时自动重试）
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+async function withRetry(fn, options = {}) {
+  const { retries = 3, baseDelay = 1000 } = options;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const status = err?.response?.status;
+      const isRetryable = status === 429 || status === 502 || status === 503 || !status;
+      if (i === retries || !isRetryable) throw err;
+      const delay = baseDelay * Math.pow(2, i) + Math.random() * 500;
+      console.log(`[netease] 请求失败(${status || 'timeout'})，${Math.round(delay)}ms 后重试(${i + 1}/${retries})`);
+      await sleep(delay);
+    }
+  }
+}
+
 // 统一封装开源 NeteaseCloudMusicApi 的 HTTP 调用
 // 所有需要登录态的请求都会把用户 Cookie 放进请求头，代表用户操作
 const http = axios.create({
   baseURL: config.neteaseApiBase,
-  timeout: 20000,
+  timeout: 35000, // 35s：给 Render 冷启动和网易云限流留足时间
 });
 
 // 网易云接口要求带 timestamp 防缓存
@@ -45,35 +65,43 @@ const realNetease = {
 
   // 获取二维码 unikey
   async getQrKey() {
-    const { data } = await http.get('/login/qr/key', { params: params() });
-    return data.data.unikey;
+    return withRetry(async () => {
+      const { data } = await http.get('/login/qr/key', { params: params() });
+      return data.data.unikey;
+    });
   },
 
   // 用 unikey 生成二维码（返回 base64 图片 + 跳转链接）
   async createQr(key) {
-    const { data } = await http.get('/login/qr/create', {
-      params: params({ key, qrimg: true }),
+    return withRetry(async () => {
+      const { data } = await http.get('/login/qr/create', {
+        params: params({ key, qrimg: true }),
+      });
+      return data.data; // { qrimg: 'data:image/png;base64,...', qrurl }
     });
-    return data.data; // { qrimg: 'data:image/png;base64,...', qrurl }
   },
 
   // 轮询扫码状态
   // code: 800=二维码过期 801=等待扫码 802=已扫码待确认 803=登录成功(含 cookie)
   async checkQr(key) {
-    const { data } = await http.get('/login/qr/check', { params: params({ key }) });
-    // 扫码接口返回的 cookie 会混入 Set-Cookie 指令（Max-Age/Expires/Path 等），
-    // 直接放进 Cookie 头会导致服务端解析失败，必须清洗后再存储
-    if (data.cookie) data.cookie = sanitizeCookie(data.cookie);
-    return data;
+    return withRetry(async () => {
+      const { data } = await http.get('/login/qr/check', { params: params({ key }) });
+      // 扫码接口返回的 cookie 会混入 Set-Cookie 指令（Max-Age/Expires/Path 等），
+      // 直接放进 Cookie 头会导致服务端解析失败，必须清洗后再存储
+      if (data.cookie) data.cookie = sanitizeCookie(data.cookie);
+      return data;
+    });
   },
 
   // 校验登录态，拿用户信息
   async loginStatus(cookie) {
-    const { data } = await http.get('/login/status', {
-      headers: cookieHeader(cookie),
-      params: params(),
+    return withRetry(async () => {
+      const { data } = await http.get('/login/status', {
+        headers: cookieHeader(cookie),
+        params: params(),
+      });
+      return data.data; // { account, profile }
     });
-    return data.data; // { account, profile }
   },
 
   // 发送手机验证码

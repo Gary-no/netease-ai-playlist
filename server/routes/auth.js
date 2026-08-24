@@ -58,7 +58,9 @@ router.get('/qr/check', async (req, res) => {
         console.log('[auth/qr/check] loginStatus 失败:', err.message);
       }
       cookieStore.set(sessionId, result.cookie, profile);
-      res.json({ ...result, profile, loginWarn: profile.userId ? undefined : '登录态获取失败，请重新扫码' });
+      // 返回加密的 cookie 给前端，前端存 localStorage，部署后自动恢复登录
+      const encryptedCookie = cookieStore.rawEncrypt(result.cookie);
+      res.json({ ...result, profile, _cookie: encryptedCookie, loginWarn: profile.userId ? undefined : '登录态获取失败，请重新扫码' });
     } else {
       res.json(result);
     }
@@ -136,7 +138,8 @@ router.post('/cellphone', async (req, res) => {
       avatarUrl: data.profile?.avatarUrl || '',
     };
     cookieStore.set(sessionId, data.cookie, profile);
-    res.json({ profile });
+    const encryptedCookie = cookieStore.rawEncrypt(data.cookie);
+    res.json({ profile, _cookie: encryptedCookie });
   } catch (e) {
     res.status(500).json({ error: e.message || '登录失败' });
   }
