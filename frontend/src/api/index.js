@@ -141,8 +141,10 @@ export const api = {
     const { data } = await http.get('/admin/my-feedback');
     return data;
   },
-  async submitFeedbackReply(id, reply) {
-    const { data } = await http.post('/admin/feedback-reply', { id, reply });
+  async submitFeedbackReply(id, reply, token) {
+    const { data } = await http.post('/admin/feedback-reply', { id, reply }, {
+      headers: { 'X-Admin-Token': token },
+    });
     return data;
   },
 

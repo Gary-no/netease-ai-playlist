@@ -166,11 +166,12 @@ async function onReply(id) {
   const text = replyTexts.value[id]?.trim();
   if (!text) return;
   try {
-    await api.submitFeedbackReply(id, text);
+    await api.submitFeedbackReply(id, text, token.value);
     replyTexts.value[id] = '';
     await loadStats();
-  } catch {
-    // ignore
+  } catch (e) {
+    const msg = e?.response?.data?.error || '回复失败';
+    alert(msg);
   }
 }
 
