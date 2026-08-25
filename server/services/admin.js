@@ -37,12 +37,13 @@ async function redisSet(value) {
 // 注意：单次写入失败不能污染整条队列，否则后续所有写入会永久静默失败
 let writeQueue = Promise.resolve();
 async function persist(data) {
-  if (useRedis) {
-    await redisSet(data); // redisSet 内部会做 JSON.stringify，这里不再重复序列化
-    return; // 有 Redis 时以云存储为准，本地文件只是调试兜底
-  }
+  // 无论是否用 Upstash，都写本地文件，确保 load() 回退时不会读到旧数据
   mkdirSync(DATA_DIR, { recursive: true });
   writeFileSync(FILE, JSON.stringify(data, null, 2));
+  if (useRedis) {
+    // Redis 异步写入，失败不阻塞本地写入
+    redisSet(data).catch((e) => console.log('[admin] Upstash 写入失败:', e.message));
+  }
 }
 async function lockedWrite(data) {
   const task = writeQueue.then(() => persist(data));
@@ -74,11 +75,9 @@ async function load() {
     try {
       const raw = await redisGet();
       if (raw) return merge(JSON.parse(raw));
-      // Redis 无数据时，尝试把本地文件同步上去（首次迁移）
+      // Redis 无数据时，回退本地文件（不写回 Redis，避免覆盖已有数据）
       if (existsSync(FILE)) {
-        const local = merge(JSON.parse(readFileSync(FILE, 'utf-8')));
-        persist(local).catch(() => {});
-        return local;
+        try { return merge(JSON.parse(readFileSync(FILE, 'utf-8'))); } catch {}
       }
       return { ...DEFAULT };
     } catch (e) {
