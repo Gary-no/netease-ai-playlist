@@ -778,6 +778,6 @@ async function onLogout() {
   .changelog-btn svg, .theme-btn svg { width: 14px; height: 14px; }
 }
 @media (max-width: 480px) {
-  .version-badge { display: none; }
+  .version-badge { font-size: 10px; padding: 1px 6px; }
 }
 </style>
