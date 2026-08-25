@@ -30,4 +30,9 @@ export default {
   cookieSecret: process.env.COOKIE_SECRET || 'dev-secret-replace-in-production',
   // CORS 允许的域名
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  // Upstash Redis 持久化（可选）：配置后 admin 数据存云端，实例重启/回收不丢
+  upstash: {
+    redisUrl: process.env.UPSTASH_REDIS_REST_URL || '',
+    redisToken: process.env.UPSTASH_REDIS_REST_TOKEN || '',
+  },
 };

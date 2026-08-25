@@ -160,6 +160,10 @@ const theme = ref(localStorage.getItem('ncm_theme') || 'dark');
 
 const changelog = [
   {
+    version: '0.7.5',
+    items: ['修复反馈/报错/统计在实例重启后丢失：接入 Upstash 云端持久化，数据不再丢失'],
+  },
+  {
     version: '0.7.4',
     items: ['修复扫码二维码 429 限流：qr/key 命中网易云API缓存，不再频繁真实请求'],
   },

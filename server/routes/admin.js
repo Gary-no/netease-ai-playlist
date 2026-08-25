@@ -23,10 +23,10 @@ router.post('/verify', (req, res) => {
 });
 
 // 获取统计数据（需密码 verified）
-router.get('/stats', (req, res) => {
+router.get('/stats', async (req, res) => {
   const token = req.headers['x-admin-token'];
   if (!token || !token.startsWith('admin-')) return res.status(403).json({ error: '无权限，请先验证密码' });
-  res.json(getStats());
+  res.json(await getStats());
 });
 
 // 获取当前在线用户列表（需密码 verified）
@@ -48,11 +48,11 @@ router.post('/feedback', async (req, res) => {
 });
 
 // 查看自己的反馈记录（需登录）
-router.get('/my-feedback', (req, res) => {
+router.get('/my-feedback', async (req, res) => {
   const record = getRecord(req);
   if (!record) return res.status(401).json({ error: '请先登录' });
   const nickname = record.profile?.nickname || '未知用户';
-  res.json({ feedbacks: getUserFeedbacks(nickname) });
+  res.json({ feedbacks: await getUserFeedbacks(nickname) });
 });
 
 // 管理员回复反馈（需密码 verified）
