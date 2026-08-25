@@ -68,10 +68,12 @@ class CookieStore {
   }
 
   // 从前端 localStorage 导入网易云 Cookie（用于部署后恢复登录态）
+  // cookie 是 rawEncrypt 输出的已加密值（iv:tag:ciphertext），直接存储即可，
+  // 不可再 _encrypt 一次！否则 get() 解密后得到的是密文而非原始 cookie。
   import(sessionId, cookie, profile) {
     if (!cookie) return;
     this.data[sessionId] = {
-      cookie: this._encrypt(cookie),
+      cookie, // 已加密，直接存储
       profile: profile || { nickname: '网易云用户', userId: null, avatarUrl: '' },
       updatedAt: Date.now(),
     };

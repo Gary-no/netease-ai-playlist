@@ -49,7 +49,13 @@ app.use((req, res, next) => {
     const existing = cookieStore.get(sessionId);
     if (!existing) {
       try {
-        cookieStore.import(sessionId, ncmCookie);
+        // 前端可能同时缓存了 profile，一并还原
+        let profile;
+        const rawProfile = req.headers['x-ncm-profile'];
+        if (rawProfile) {
+          try { profile = JSON.parse(rawProfile); } catch {}
+        }
+        cookieStore.import(sessionId, ncmCookie, profile);
       } catch {
         // Cookie 无效或格式错误，忽略
       }

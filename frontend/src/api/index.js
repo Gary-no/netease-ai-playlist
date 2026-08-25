@@ -42,11 +42,13 @@ export function getLocalProfile() {
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 const http = axios.create({ baseURL: API_BASE, timeout: 120000 });
 
-// 所有请求自动携带会话 ID + 加密 Cookie
+// 所有请求自动携带会话 ID + 加密 Cookie + 本地缓存的 profile
 http.interceptors.request.use((config) => {
   config.headers['X-Session-Id'] = getSessionId();
   const cookie = localStorage.getItem(COOKIE_KEY);
   if (cookie) config.headers['X-Ncm-Cookie'] = cookie;
+  const profile = getLocalProfile();
+  if (profile) config.headers['X-Ncm-Profile'] = JSON.stringify(profile);
   return config;
 });
 
