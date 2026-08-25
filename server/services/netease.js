@@ -64,9 +64,12 @@ const realNetease = {
   // ============ 登录相关 ============
 
   // 获取二维码 unikey
+  // 注意：不带 timestamp！netease-api 对 200 响应有 2 分钟缓存，
+  // 若带 timestamp 每次 URL 不同导致缓存永远 miss，频繁真实请求网易云会触发 429 限流。
+  // unikey 本身 2 分钟内有效，命中缓存完全合理。
   async getQrKey() {
     return withRetry(async () => {
-      const { data } = await http.get('/login/qr/key', { params: params() });
+      const { data } = await http.get('/login/qr/key');
       return data.data.unikey;
     });
   },
