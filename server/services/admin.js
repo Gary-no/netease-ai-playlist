@@ -38,7 +38,7 @@ async function redisSet(value) {
 let writeQueue = Promise.resolve();
 async function persist(data) {
   if (useRedis) {
-    await redisSet(JSON.stringify(data));
+    await redisSet(data); // redisSet 内部会做 JSON.stringify，这里不再重复序列化
     return; // 有 Redis 时以云存储为准，本地文件只是调试兜底
   }
   mkdirSync(DATA_DIR, { recursive: true });
