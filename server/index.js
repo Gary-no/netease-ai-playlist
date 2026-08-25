@@ -56,6 +56,10 @@ app.use((req, res, next) => {
           try { profile = JSON.parse(rawProfile); } catch {}
         }
         cookieStore.import(sessionId, ncmCookie, profile);
+        // 恢复 session 后也记录活跃，确保"今日活跃"与"在线用户"一致
+        if (profile) {
+          trackLogin(profile.phone || '', profile.userId).catch(() => {});
+        }
       } catch {
         // Cookie 无效或格式错误，忽略
       }
@@ -81,6 +85,10 @@ app.use((req, res, next) => {
     }
     if (req.originalUrl === '/api/auth/qr/check' && req.method === 'GET' && res.statusCode === 200 && body?.profile) {
       // 扫码登录成功，通过 session 获取手机号（如果存了）
+      trackLogin(body.profile?.phone || '', body.profile?.userId).catch(() => {});
+    }
+    // 每次页面加载检查登录态时，记录活跃（覆盖已恢复 session 的场景）
+    if (req.originalUrl === '/api/auth/me' && req.method === 'GET' && res.statusCode === 200 && body?.loggedIn && body?.profile) {
       trackLogin(body.profile?.phone || '', body.profile?.userId).catch(() => {});
     }
     return oldJson(body);
